@@ -21,8 +21,6 @@
   --pointer-y: 50vh;
   --section-local: 0;
   --scene-hue: 176;
-  --shake-x: 0px;
-  --shake-y: 0px;
   --stage-x: 0px;
   --stage-y: 0px;
   --stage-scale: 1;
@@ -77,7 +75,7 @@ canvas {
   overflow: hidden;
   background: #05070a;
   isolation: isolate;
-  transform: translate3d(var(--shake-x), var(--shake-y), 0) scale(calc(1 + var(--cut) * .01));
+  transform: translateZ(0);
   transform-origin: center;
   will-change: transform;
   contain: layout paint;
@@ -91,10 +89,11 @@ canvas {
     translate3d(var(--scene-x, 0px), var(--scene-y, 0px), 0)
     scale(var(--scene-scale, 1.08))
     rotate(var(--scene-rotate, 0deg));
-  filter: brightness(var(--scene-bright, .78)) blur(var(--scene-blur, 0px)) saturate(var(--scene-sat, 1));
   transform-origin: center;
-  will-change: opacity, transform, filter;
+  will-change: opacity, transform;
   clip-path: inset(var(--scene-top, 0%) var(--scene-right, 0%) var(--scene-bottom, 0%) var(--scene-left, 0%));
+  backface-visibility: hidden;
+  contain: paint;
 }
 
 .scene::before,
@@ -115,7 +114,7 @@ canvas {
 }
 
 .scene::after {
-  opacity: .24;
+  opacity: var(--scene-dim, .24);
   background:
     linear-gradient(180deg, rgba(5, 7, 10, .18), transparent 36%, rgba(5, 7, 10, .36)),
     linear-gradient(90deg, rgba(5, 7, 10, .58), transparent 42%, rgba(5, 7, 10, .34));
@@ -137,6 +136,8 @@ canvas {
 .scene__video {
   z-index: 1;
   opacity: .96;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .scene--01 .scene__video,
@@ -467,6 +468,111 @@ canvas {
 .scene-shutter span:nth-child(5) { top: 61vh; --shutter-dir: -1; opacity: .56; }
 .scene-shutter span:nth-child(6) { top: 78vh; --shutter-dir: 1; opacity: .44; }
 
+html[data-motion="ink"] .transition-field {
+  opacity: calc(var(--cut) * .54);
+  background:
+    radial-gradient(ellipse at 38% 42%, rgba(255, 255, 255, .92), rgba(255, 255, 255, .36) 26%, transparent 54%),
+    radial-gradient(ellipse at 74% 58%, rgba(5, 7, 10, .38), transparent 42%),
+    #eef2f4;
+  mix-blend-mode: normal;
+}
+
+html[data-motion="ink"] .scene-shutter span {
+  height: 18vh;
+  background:
+    linear-gradient(90deg, transparent 0 12%, rgba(255, 255, 255, .58), rgba(5, 7, 10, .14), transparent 78%);
+  transform:
+    translate3d(calc((1 - var(--cut)) * var(--shutter-dir, 1) * 74vw + var(--velocity) * 44px), 0, 0)
+    skewY(-3deg);
+}
+
+html[data-motion="signal"] .transition-field {
+  opacity: calc(var(--cut) * .68);
+  background:
+    radial-gradient(circle at 45% 48%, rgba(255, 255, 255, .86), transparent 9%),
+    repeating-radial-gradient(circle at 50% 50%, hsla(var(--scene-hue), 100%, 68%, .2) 0 1px, transparent 1px 42px),
+    linear-gradient(120deg, transparent, rgba(106, 124, 255, .38), transparent);
+  mix-blend-mode: screen;
+}
+
+html[data-motion="signal"] .scene-shutter span {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .86), hsla(var(--scene-hue), 100%, 66%, .8), transparent);
+  box-shadow: 0 0 18px hsla(var(--scene-hue), 100%, 66%, .5);
+}
+
+html[data-motion="interface"] .transition-field {
+  opacity: calc(var(--cut) * .62);
+  background:
+    linear-gradient(90deg, rgba(0, 229, 194, .18), transparent 22%, rgba(255, 255, 255, .2) 50%, transparent 78%, rgba(0, 229, 194, .14)),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, .16) 0 1px, transparent 1px 18px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, .12) 0 1px, transparent 1px 72px);
+}
+
+html[data-motion="interface"] .scene-shutter span {
+  height: 8vh;
+  background:
+    linear-gradient(90deg, transparent, rgba(0, 229, 194, .28), rgba(255, 255, 255, .18), transparent),
+    repeating-linear-gradient(90deg, transparent 0 14px, rgba(255, 255, 255, .18) 14px 15px, transparent 15px 28px);
+  transform:
+    translate3d(calc((1 - var(--cut)) * var(--shutter-dir, 1) * 95vw + var(--velocity) * 60px), 0, 0)
+    skewY(0deg);
+}
+
+html[data-motion="portal"] .transition-field {
+  opacity: calc(var(--cut) * .7);
+  background:
+    radial-gradient(circle at 58% 50%, transparent 0 18%, rgba(255, 255, 255, .5) 19%, transparent 21% 30%, hsla(var(--scene-hue), 100%, 68%, .46) 31%, transparent 38%),
+    conic-gradient(from calc(var(--section-local) * 360deg), transparent, rgba(255, 255, 255, .32), transparent, hsla(var(--scene-hue), 100%, 65%, .3), transparent);
+}
+
+html[data-motion="portal"] .stage__vortex {
+  opacity: calc(.1 + var(--cut) * .58 + var(--burst) * .24);
+}
+
+html[data-motion="team"] .transition-field {
+  opacity: calc(var(--cut) * .56);
+  background:
+    linear-gradient(90deg, rgba(255, 61, 113, .22), transparent 26%, rgba(255, 255, 255, .2), transparent 74%, rgba(255, 61, 113, .2)),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, .22) 0 1px, transparent 1px 9vw);
+}
+
+html[data-motion="team"] .scene-shutter span {
+  top: -12vh;
+  bottom: -12vh;
+  width: 18vw;
+  height: auto;
+  background: linear-gradient(105deg, transparent, rgba(255, 61, 113, .24), rgba(255, 255, 255, .2), transparent);
+  transform:
+    translate3d(calc((1 - var(--cut)) * var(--shutter-dir, 1) * 46vw + var(--velocity) * 38px), 0, 0)
+    skewX(-15deg);
+}
+
+html[data-motion="growth"] .transition-field {
+  opacity: calc(var(--cut) * .64);
+  background:
+    radial-gradient(circle at 74% 35%, rgba(255, 196, 0, .62), transparent 14%),
+    linear-gradient(145deg, transparent 0 38%, rgba(255, 196, 0, .42) 49%, transparent 60%),
+    repeating-linear-gradient(0deg, transparent 0 20px, rgba(255, 196, 0, .12) 20px 21px, transparent 21px 42px);
+}
+
+html[data-motion="growth"] .scene-shutter span {
+  height: 3px;
+  background: linear-gradient(90deg, transparent, rgba(255, 196, 0, .86), rgba(255, 255, 255, .5), transparent);
+  box-shadow: 0 0 22px rgba(255, 196, 0, .46);
+}
+
+html[data-motion="contact"] .transition-field {
+  opacity: calc(var(--cut) * .52);
+  background:
+    linear-gradient(115deg, transparent 0 30%, rgba(255, 255, 255, .66) 46%, rgba(0, 229, 194, .22) 54%, transparent 70%),
+    radial-gradient(circle at 70% 55%, rgba(255, 255, 255, .26), transparent 26%);
+}
+
+html[data-motion="contact"] .scene-gate {
+  opacity: calc(var(--cut) * .48 + var(--speed) * .12);
+}
+
 .transition-field::before,
 .transition-field::after {
   content: "";
@@ -692,18 +798,33 @@ canvas {
 
 .chapter__title {
   margin: 0;
-  font-size: 112px;
-  line-height: .94;
+  font-size: 104px;
+  line-height: .96;
   font-weight: 400;
   letter-spacing: 0;
   text-transform: uppercase;
   text-wrap: balance;
   transform: translate3d(calc(var(--velocity) * -16px), 0, 0);
-  filter: drop-shadow(0 0 calc(var(--cut) * 28px) hsla(var(--scene-hue), 100%, 70%, .32));
+  word-break: keep-all;
+  overflow-wrap: normal;
 }
 
-.chapter--final .chapter__title {
-  font-size: 84px;
+.chapter__title span {
+  display: block;
+}
+
+.chapter__title--jp {
+  font-size: 86px;
+  line-height: 1.13;
+  text-transform: none;
+}
+
+.chapter__title--jp span {
+  white-space: nowrap;
+}
+
+.chapter--final .chapter__title--jp {
+  font-size: 78px;
 }
 
 .chapter--final .chapter__lead {
@@ -826,8 +947,12 @@ canvas {
     font-size: 92px;
   }
 
-  .chapter--final .chapter__title {
-    font-size: 76px;
+  .chapter__title--jp {
+    font-size: 72px;
+  }
+
+  .chapter--final .chapter__title--jp {
+    font-size: 68px;
   }
 
   .chapter__copy {
@@ -941,8 +1066,13 @@ canvas {
     line-height: 1;
   }
 
-  .chapter--final .chapter__title {
-    font-size: 54px;
+  .chapter__title--jp {
+    font-size: 42px;
+    line-height: 1.18;
+  }
+
+  .chapter--final .chapter__title--jp {
+    font-size: 42px;
   }
 
   .chapter__lead {
@@ -978,8 +1108,9 @@ canvas {
     font-size: 48px;
   }
 
-  .chapter--final .chapter__title {
-    font-size: 46px;
+  .chapter__title--jp,
+  .chapter--final .chapter__title--jp {
+    font-size: 40px;
   }
 
   .chapter__lead {
