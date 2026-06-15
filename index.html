@@ -49,14 +49,28 @@
     <video class="scene__video" src="assets/video/scene-08-next-axis.mp4" poster="assets/scenes/scene-08-next-axis.png" muted loop playsinline preload="metadata"></video>
   </div>
   <canvas class="fx-canvas"></canvas>
+  <div class="stage__depth" aria-hidden="true">
+    <span></span><span></span><span></span><span></span><span></span>
+  </div>
   <div class="stage__shade"></div>
   <div class="stage__grid"></div>
   <div class="stage__axis"></div>
   <div class="stage__flare"></div>
   <div class="stage__rings"></div>
+  <div class="stage__vortex" aria-hidden="true">
+    <span></span><span></span><span></span>
+  </div>
+  <div class="stage__lens"></div>
+  <div class="stage__slices" aria-hidden="true">
+    <span></span><span></span><span></span><span></span><span></span>
+  </div>
 </div>
 
 <div class="transition-field" aria-hidden="true"></div>
+<div class="scene-gate" aria-hidden="true"><span></span><span></span></div>
+<div class="scene-shutter" aria-hidden="true">
+  <span></span><span></span><span></span><span></span><span></span><span></span>
+</div>
 <div class="grain" aria-hidden="true"></div>
 
 <header class="header">
@@ -78,8 +92,13 @@
   <span class="progress__bar"></span>
 </div>
 
+<div class="scene-readout" aria-hidden="true">
+  <span class="scene-readout__num">01</span>
+  <span class="scene-readout__label">THE AXIS AWAKENS</span>
+</div>
+
 <main class="story">
-  <section class="chapter chapter--dark" id="top" data-scene="0">
+  <section class="chapter chapter--dark" id="top" data-scene="0" data-label="THE AXIS AWAKENS">
     <div class="chapter__copy">
       <p class="chapter__eyebrow">01 / THE AXIS AWAKENS</p>
       <h1 class="chapter__title">MAKE THE<br>AXIS.</h1>
@@ -92,7 +111,7 @@
     <p class="chapter__side">Business moves when the axis is clear.</p>
   </section>
 
-  <section class="chapter chapter--ink" id="structure" data-scene="1">
+  <section class="chapter chapter--ink" id="structure" data-scene="1" data-label="INVISIBLE STRUCTURE">
     <div class="chapter__copy chapter__copy--right">
       <p class="chapter__eyebrow">02 / INVISIBLE STRUCTURE</p>
       <h2 class="chapter__title">見えない<br>設計を、<br>可視化する。</h2>
@@ -101,7 +120,7 @@
     </div>
   </section>
 
-  <section class="chapter chapter--dark" id="strategy" data-scene="2">
+  <section class="chapter chapter--dark" id="strategy" data-scene="2" data-label="SIGNALS BECOME STRATEGY">
     <div class="chapter__copy">
       <p class="chapter__eyebrow">03 / SIGNALS BECOME STRATEGY</p>
       <h2 class="chapter__title">点の施策を、<br>ひとつの<br>軌道へ。</h2>
@@ -110,7 +129,7 @@
     </div>
   </section>
 
-  <section class="chapter chapter--dark" id="web" data-scene="3">
+  <section class="chapter chapter--dark" id="web" data-scene="3" data-label="WEB EXPERIENCE">
     <div class="chapter__copy chapter__copy--right">
       <p class="chapter__eyebrow">04 / WEB EXPERIENCE</p>
       <h2 class="chapter__title">伝わるだけでなく、<br>進ませる。</h2>
@@ -122,7 +141,7 @@
     </div>
   </section>
 
-  <section class="chapter chapter--dark" id="film" data-scene="4">
+  <section class="chapter chapter--dark" id="film" data-scene="4" data-label="FILM & 3DCG">
     <div class="chapter__copy">
       <p class="chapter__eyebrow">05 / FILM &amp; 3DCG</p>
       <h2 class="chapter__title">情報を、<br>体験に<br>変える。</h2>
@@ -131,7 +150,7 @@
     </div>
   </section>
 
-  <section class="chapter chapter--dark" id="team" data-scene="5">
+  <section class="chapter chapter--dark" id="team" data-scene="5" data-label="ONE TEAM">
     <div class="chapter__copy chapter__copy--right">
       <p class="chapter__eyebrow">06 / ONE TEAM</p>
       <h2 class="chapter__title">分断しない<br>チームで、<br>動かす。</h2>
@@ -140,7 +159,7 @@
     </div>
   </section>
 
-  <section class="chapter chapter--dark" id="growth" data-scene="6">
+  <section class="chapter chapter--dark" id="growth" data-scene="6" data-label="THE GROWTH GATE">
     <div class="chapter__copy">
       <p class="chapter__eyebrow">07 / THE GROWTH GATE</p>
       <h2 class="chapter__title">つくって<br>終わらない。</h2>
@@ -152,7 +171,7 @@
     </div>
   </section>
 
-  <section class="chapter chapter--dark chapter--final" id="contact" data-scene="7">
+  <section class="chapter chapter--dark chapter--final" id="contact" data-scene="7" data-label="NEXT AXIS">
     <div class="chapter__copy chapter__copy--right">
       <p class="chapter__eyebrow">08 / NEXT AXIS</p>
       <h2 class="chapter__title">次の一手を、<br>ここから。</h2>
