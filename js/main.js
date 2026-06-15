@@ -231,17 +231,26 @@
     if (!title || title.dataset.typoReady === 'true') return;
     const lines = Array.from(title.children);
     const label = lines.map((line) => (line.textContent || '').trim()).filter(Boolean).join(' ');
+    const useLineText = title.classList.contains('chapter__title--jp');
 
     if (label) title.setAttribute('aria-label', label);
 
     lines.forEach((line, lineIndex) => {
       const text = line.textContent || '';
-      const chars = segmentText(text);
       line.textContent = '';
       line.classList.add('typo-line');
       line.setAttribute('aria-hidden', 'true');
       line.style.setProperty('--line-index', lineIndex);
 
+      if (useLineText) {
+        const inner = document.createElement('span');
+        inner.className = 'typo-line-text';
+        inner.textContent = text;
+        line.appendChild(inner);
+        return;
+      }
+
+      const chars = segmentText(text);
       chars.forEach((char, charIndex) => {
         const motion = getGlyphMotion(mode, charIndex, lineIndex, chars.length);
         const glyph = document.createElement('span');
