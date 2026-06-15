@@ -37,11 +37,15 @@
   let canvasW = 0;
   let canvasH = 0;
   let dpr = 1;
-  let lastScrollY = window.scrollY || window.pageYOffset || 0;
+  let targetScrollY = window.scrollY || window.pageYOffset || 0;
+  let visualScrollY = targetScrollY;
+  let previousVisualScrollY = visualScrollY;
   let lastTime = performance.now();
   let lastFxDraw = 0;
   let fxRunning = false;
   let stableChapterIndex = 0;
+  let lastActiveChapter = -1;
+  let lastActiveScene = -1;
   const styleCache = new WeakMap();
   const fxState = {
     progress: 0,
@@ -63,6 +67,12 @@
     video: scene.querySelector('video'),
     active: false,
     near: false,
+  }));
+
+  const chapterEntries = chapters.map((chapter) => ({
+    chapter,
+    copy: chapter.querySelector('.chapter__copy'),
+    active: false,
   }));
 
   const setStyle = (element, prop, value) => {
@@ -396,12 +406,22 @@
   const update = () => {
     ticking = false;
     const now = performance.now();
-    const actualScrollY = window.scrollY || window.pageYOffset;
+    targetScrollY = window.scrollY || window.pageYOffset || 0;
     const vh = window.innerHeight || 1;
     const maxScroll = Math.max(1, document.documentElement.scrollHeight - vh);
-    const dt = Math.max(16, now - lastTime);
-    const rawVelocity = reduced ? 0 : clamp((actualScrollY - lastScrollY) / dt, -2.4, 2.4);
-    const scrollY = actualScrollY;
+    const dt = Math.max(16, Math.min(64, now - lastTime));
+    const scrollEase = reduced ? 1 : clamp(1 - Math.pow(1 - .16, dt / 16.667), .08, .5);
+
+    if (reduced) {
+      visualScrollY = targetScrollY;
+    } else {
+      const delta = targetScrollY - visualScrollY;
+      visualScrollY += delta * scrollEase;
+      if (Math.abs(delta) < .12) visualScrollY = targetScrollY;
+    }
+
+    const scrollY = visualScrollY;
+    const rawVelocity = reduced ? 0 : clamp((scrollY - previousVisualScrollY) / dt, -1.8, 1.8);
     const totalProgress = clamp(scrollY / maxScroll);
     const activeChapter = currentSceneIndex(scrollY, vh);
     const activeMetric = metrics[activeChapter] || metrics[0];
@@ -409,7 +429,7 @@
     const activeLocal = activeMetric ? clamp((scrollY - activeMetric.top) / Math.max(1, activeMetric.height - vh)) : 0;
     const wipe = reduced ? 0 : transitionPulse(scrollY, vh);
     const impact = Math.pow(wipe, .72);
-    lastScrollY = actualScrollY;
+    previousVisualScrollY = scrollY;
     lastTime = now;
     fxState.velocity = lerp(fxState.velocity, rawVelocity, .42);
     fxState.speed = clamp(Math.abs(fxState.velocity) / 2.1 + impact * .14);
@@ -481,7 +501,8 @@
       syncVideo(video, isActive, impact);
     });
 
-    chapters.forEach((chapter, index) => {
+    chapterEntries.forEach((entry, index) => {
+      const { chapter, copy } = entry;
       const metric = metrics[index];
       const local = index === 0 ? 1 : (metric ? clamp((scrollY - (metric.top - vh * 0.5)) / (vh * 0.82)) : 0);
       const leaving = metric ? clamp((scrollY - (metric.top + metric.height - vh * 1.06)) / (vh * 0.58)) : 0;
@@ -491,7 +512,6 @@
       const opacity = isCurrentChapter ? 1 : 0;
       const copyLocal = isCurrentChapter ? Math.max(localSmooth, .64) : localSmooth;
       const y = lerp(40, -12, copyLocal);
-      const copy = chapter.querySelector('.chapter__copy');
       const revealLead = metric ? scrollY + vh * .95 >= metric.top : false;
       const shouldReveal = index === 0 || revealLead || local > .08 || isCurrentChapter;
 
@@ -506,16 +526,30 @@
         setStyle(copy, '--copy-y', `${y.toFixed(2)}px`);
         setStyle(copy, '--copy-scale', lerp(.985, 1, copyLocal).toFixed(4));
       }
-      chapter.classList.toggle('is-active', index === activeChapter);
+      if (entry.active !== isCurrentChapter) {
+        chapter.classList.toggle('is-active', isCurrentChapter);
+        entry.active = isCurrentChapter;
+      }
     });
 
-    navItems.forEach((link) => {
-      const href = link.getAttribute('href') || '';
-      link.classList.toggle('is-current', href === `#${metrics[activeChapter]?.id}`);
-    });
+    if (activeChapter !== lastActiveChapter) {
+      const currentHref = `#${metrics[activeChapter]?.id}`;
+      navItems.forEach((link) => {
+        const href = link.getAttribute('href') || '';
+        link.classList.toggle('is-current', href === currentHref);
+      });
+      if (readoutLabel) readoutLabel.textContent = chapters[activeChapter]?.dataset.label || '';
+      lastActiveChapter = activeChapter;
+    }
 
-    if (readoutNum) readoutNum.textContent = String(activeScene + 1).padStart(2, '0');
-    if (readoutLabel) readoutLabel.textContent = chapters[activeChapter]?.dataset.label || '';
+    if (activeScene !== lastActiveScene) {
+      if (readoutNum) readoutNum.textContent = String(activeScene + 1).padStart(2, '0');
+      lastActiveScene = activeScene;
+    }
+
+    if (Math.abs(targetScrollY - visualScrollY) > .14) {
+      requestUpdate();
+    }
   };
 
   const renderFx = (time = 0) => {
@@ -828,13 +862,22 @@
     requestAnimationFrame(update);
   };
 
+  const syncTargetScroll = () => {
+    targetScrollY = window.scrollY || window.pageYOffset || 0;
+    requestUpdate();
+  };
+
+  const markReady = () => {
+    root.classList.add('is-ready');
+  };
+
   window.addEventListener('resize', () => {
     measure();
     resizeCanvas();
     requestUpdate();
   }, { passive: true });
 
-  window.addEventListener('scroll', requestUpdate, { passive: true });
+  window.addEventListener('scroll', syncTargetScroll, { passive: true });
 
   window.addEventListener('pointermove', (event) => {
     setRoot('--pointer-x', `${event.clientX}px`);
@@ -861,4 +904,15 @@
   resizeCanvas();
   update();
   requestFx();
+
+  const fontsReady = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
+  Promise.race([
+    fontsReady,
+    new Promise((resolve) => window.setTimeout(resolve, 900)),
+  ]).then(() => {
+    measure();
+    resizeCanvas();
+    syncTargetScroll();
+    markReady();
+  }).catch(markReady);
 })();
