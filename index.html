@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AXIS Cinematic Stage</title>
+<meta name="description" content="AXISの世界観をスクロール連動の映像ステージとして検証するプロトタイプです。">
+<meta property="og:title" content="AXIS Cinematic Stage">
+<meta property="og:description" content="勝ち筋の軸を、映画のようなスクロール体験へ。">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+<div class="stage" aria-hidden="true">
+  <div class="scene scene--01 is-active">
+    <img src="assets/scenes/scene-01-axis-awakens.png" alt="">
+  </div>
+  <div class="scene scene--02">
+    <img src="assets/scenes/scene-02-invisible-structure.png" alt="">
+  </div>
+  <div class="scene scene--03">
+    <img src="assets/scenes/scene-03-signal-strategy.png" alt="">
+  </div>
+  <div class="scene scene--04">
+    <img src="assets/scenes/scene-04-growth-gate.png" alt="">
+  </div>
+  <div class="stage__shade"></div>
+  <div class="stage__grid"></div>
+  <div class="stage__axis"></div>
+</div>
+
+<div class="transition-field" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="header">
+  <a class="brand" href="#top" aria-label="AXIS top">AXIS</a>
+  <nav class="nav" aria-label="sections">
+    <a href="#top">01</a>
+    <a href="#structure">02</a>
+    <a href="#signals">03</a>
+    <a href="#growth">04</a>
+  </nav>
+  <a class="contact" href="https://axis-company.jp/contact/" target="_blank" rel="noopener">CONTACT</a>
+</header>
+
+<div class="progress" aria-hidden="true">
+  <span class="progress__bar"></span>
+</div>
+
+<main class="story">
+  <section class="chapter chapter--dark" id="top" data-scene="0">
+    <div class="chapter__copy">
+      <p class="chapter__eyebrow">01 / THE AXIS AWAKENS</p>
+      <h1 class="chapter__title">MAKE THE<br>AXIS.</h1>
+      <p class="chapter__lead">勝ち筋の軸を、つくる。</p>
+      <p class="chapter__body">Webサイト。広告。映像。3DCG。点で動いていた施策を、ひとつの戦略へ。</p>
+    </div>
+    <p class="chapter__side">Strategy / Creative / Operation</p>
+  </section>
+
+  <section class="chapter chapter--light" id="structure" data-scene="1">
+    <div class="chapter__copy chapter__copy--right">
+      <p class="chapter__eyebrow">02 / INVISIBLE STRUCTURE</p>
+      <h2 class="chapter__title">見えない<br>設計を、<br>可視化する。</h2>
+      <p class="chapter__lead">感覚を、設計へ。設計を、成果へ。</p>
+      <p class="chapter__body">ユーザーが何を見て、何を感じ、どこで迷い、いつ動くのか。成果の裏側にある構造を読み解きます。</p>
+    </div>
+  </section>
+
+  <section class="chapter chapter--dark" id="signals" data-scene="2">
+    <div class="chapter__copy">
+      <p class="chapter__eyebrow">03 / SIGNALS BECOME STRATEGY</p>
+      <h2 class="chapter__title">点の施策を、<br>ひとつの<br>軌道へ。</h2>
+      <p class="chapter__lead">届け方まで設計して、売れる理由をつくる。</p>
+      <p class="chapter__body">広告、SEO、サイト、映像、3DCG。分断された接点をつなぎ、仮説検証の速度を上げます。</p>
+    </div>
+  </section>
+
+  <section class="chapter chapter--dark" id="growth" data-scene="3">
+    <div class="chapter__copy chapter__copy--right">
+      <p class="chapter__eyebrow">04 / THE GROWTH GATE</p>
+      <h2 class="chapter__title">成果へ進む<br>理由を、<br>設計する。</h2>
+      <p class="chapter__lead">公開して終わらない。数字を読み、進化させる。</p>
+      <p class="chapter__body">ブランドの熱とマーケティングの精度を、同じ軸で動かす。AXISは事業が前へ進む理由をつくります。</p>
+      <a class="chapter__button" href="https://axis-company.jp/contact/" target="_blank" rel="noopener">相談する<span>→</span></a>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div>
+    <p class="footer__label">AXIS CINEMATIC PROTOTYPE</p>
+    <p class="footer__copy">Your business has a next axis. We design it.</p>
+  </div>
+  <a href="#top">BACK TO TOP</a>
+</footer>
+
+<script src="js/main.js" defer></script>
+</body>
+</html>
