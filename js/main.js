@@ -477,11 +477,13 @@
       const leaving = metric ? clamp((scrollY - (metric.top + metric.height - vh * 1.06)) / (vh * 0.58)) : 0;
       const localSmooth = smooth(local);
       const leavingSmooth = smooth(leaving);
-      const opacity = clamp(localSmooth * (1 - leavingSmooth), 0, 1);
-      const y = lerp(72, -12, localSmooth) - leavingSmooth * 72;
+      const isCurrentChapter = index === activeChapter;
+      const opacity = isCurrentChapter ? 1 : 0;
+      const copyLocal = isCurrentChapter ? Math.max(localSmooth, .64) : localSmooth;
+      const y = lerp(40, -12, copyLocal);
       const copy = chapter.querySelector('.chapter__copy');
       const revealLead = metric ? scrollY + vh * .95 >= metric.top : false;
-      const shouldReveal = index === 0 || revealLead || local > .08 || index === activeChapter;
+      const shouldReveal = index === 0 || revealLead || local > .08 || isCurrentChapter;
 
       if (shouldReveal && chapter.dataset.revealed !== 'true') {
         chapter.dataset.revealed = 'true';
@@ -492,7 +494,7 @@
       if (copy) {
         setStyle(copy, '--copy-opacity', opacity.toFixed(3));
         setStyle(copy, '--copy-y', `${y.toFixed(2)}px`);
-        setStyle(copy, '--copy-scale', (lerp(.985, 1, localSmooth) + leavingSmooth * .035).toFixed(4));
+        setStyle(copy, '--copy-scale', lerp(.985, 1, copyLocal).toFixed(4));
       }
       chapter.classList.toggle('is-active', index === activeChapter);
     });
