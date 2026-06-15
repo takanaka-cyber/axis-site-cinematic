@@ -290,8 +290,8 @@
       chapter.dataset.typoMode = mode;
       splitTokens(chapter.querySelector('.chapter__eyebrow'));
       splitTitle(chapter.querySelector('.chapter__title'), mode);
-      maskTextBlock(chapter.querySelector('.chapter__lead'), 260);
-      maskTextBlock(chapter.querySelector('.chapter__body'), 390);
+      maskTextBlock(chapter.querySelector('.chapter__lead'), 120);
+      maskTextBlock(chapter.querySelector('.chapter__body'), 180);
       chapter.querySelectorAll('.chapter__meta span').forEach((item, index) => {
         item.style.setProperty('--token-index', index);
         item.classList.add('typo-chip');
@@ -480,6 +480,13 @@
       const opacity = clamp(localSmooth * (1 - leavingSmooth), 0, 1);
       const y = lerp(72, -12, localSmooth) - leavingSmooth * 72;
       const copy = chapter.querySelector('.chapter__copy');
+      const revealLead = metric ? scrollY + vh * .95 >= metric.top : false;
+      const shouldReveal = index === 0 || revealLead || local > .08 || index === activeChapter;
+
+      if (shouldReveal && chapter.dataset.revealed !== 'true') {
+        chapter.dataset.revealed = 'true';
+        chapter.classList.add('is-revealed');
+      }
 
       setStyle(chapter, '--line-scale', (localSmooth * (1 - leavingSmooth * .74)).toFixed(3));
       if (copy) {
