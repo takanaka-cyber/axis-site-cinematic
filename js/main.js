@@ -11,6 +11,8 @@
   const canvas = document.querySelector('.fx-canvas');
   const ctx = canvas ? canvas.getContext('2d', { alpha: true }) : null;
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const reducedData = window.matchMedia('(prefers-reduced-data: reduce)').matches;
+  const lowPower = reducedData || window.innerWidth < 760;
 
   const clamp = (n, min = 0, max = 1) => Math.min(max, Math.max(min, n));
   const smooth = (n) => n * n * (3 - 2 * n);
@@ -38,6 +40,8 @@
   let lastScrollY = window.scrollY || window.pageYOffset || 0;
   let lastTime = performance.now();
   let lastFxDraw = 0;
+  let fxRunning = false;
+  const styleCache = new WeakMap();
   const fxState = {
     progress: 0,
     impact: 0,
@@ -53,7 +57,29 @@
     motion: motionModes[0],
   };
 
-  const particleCount = window.innerWidth < 860 ? 36 : 68;
+  const sceneEntries = scenes.map((scene) => ({
+    scene,
+    video: scene.querySelector('video'),
+    active: false,
+    near: false,
+  }));
+
+  const setStyle = (element, prop, value) => {
+    if (!element) return;
+    let cache = styleCache.get(element);
+    if (!cache) {
+      cache = new Map();
+      styleCache.set(element, cache);
+    }
+    if (cache.get(prop) === value) return;
+    cache.set(prop, value);
+    if (prop.startsWith('--')) element.style.setProperty(prop, value);
+    else element.style[prop] = value;
+  };
+
+  const setRoot = (prop, value) => setStyle(root, prop, value);
+
+  const particleCount = lowPower ? 24 : (window.innerWidth < 860 ? 32 : 52);
   const particles = Array.from({ length: particleCount }, (_, i) => ({
     x: (Math.sin(i * 17.11) + 1) / 2,
     y: (Math.cos(i * 9.73) + 1) / 2,
@@ -288,7 +314,7 @@
 
   const resizeCanvas = () => {
     if (!canvas || !ctx) return;
-    dpr = Math.min(1.15, window.devicePixelRatio || 1);
+    dpr = Math.min(lowPower ? .82 : 1, window.devicePixelRatio || 1);
     canvasW = window.innerWidth;
     canvasH = window.innerHeight;
     canvas.width = Math.floor(canvasW * dpr);
@@ -318,13 +344,13 @@
   };
 
   const applyKineticVars = () => {
-    root.style.setProperty('--speed', fxState.speed.toFixed(3));
-    root.style.setProperty('--velocity', fxState.velocity.toFixed(3));
-    root.style.setProperty('--cut', fxState.cut.toFixed(3));
-    root.style.setProperty('--burst', fxState.burst.toFixed(3));
-    root.style.setProperty('--direction', String(fxState.direction));
-    root.style.setProperty('--section-local', fxState.local.toFixed(3));
-    root.style.setProperty('--scene-hue', String(fxState.hue));
+    setRoot('--speed', fxState.speed.toFixed(3));
+    setRoot('--velocity', fxState.velocity.toFixed(3));
+    setRoot('--cut', fxState.cut.toFixed(3));
+    setRoot('--burst', fxState.burst.toFixed(3));
+    setRoot('--direction', String(fxState.direction));
+    setRoot('--section-local', fxState.local.toFixed(3));
+    setRoot('--scene-hue', String(fxState.hue));
     if (root.dataset.motion !== fxState.motion) root.dataset.motion = fxState.motion;
   };
 
@@ -349,6 +375,12 @@
       video.dataset.playState = 'paused';
       video.pause();
     }
+  };
+
+  const requestFx = () => {
+    if (reduced || !ctx || fxRunning) return;
+    fxRunning = true;
+    requestAnimationFrame(renderFx);
   };
 
   const update = () => {
@@ -387,18 +419,24 @@
     applyKineticVars();
 
     if (progressBar) {
-      progressBar.style.transform = `scaleX(${totalProgress.toFixed(4)})`;
+      setStyle(progressBar, 'transform', `scaleX(${totalProgress.toFixed(4)})`);
     }
 
-    root.style.setProperty('--wipe', wipe.toFixed(3));
-    root.style.setProperty('--wipe-gap', `${((1 - wipe) * 50).toFixed(2)}%`);
-    root.style.setProperty('--impact', impact.toFixed(3));
-    root.style.setProperty('--stage-x', `${lerp(0, -220, totalProgress).toFixed(2)}px`);
-    root.style.setProperty('--stage-y', `${lerp(0, 140, totalProgress).toFixed(2)}px`);
-    root.style.setProperty('--stage-scale', (1 + totalProgress * 0.12 + impact * .04 + fxState.burst * .025).toFixed(4));
-    root.style.setProperty('--axis-scale', (0.64 + impact * 1.16).toFixed(3));
+    setRoot('--wipe', wipe.toFixed(3));
+    setRoot('--wipe-gap', `${((1 - wipe) * 50).toFixed(2)}%`);
+    setRoot('--wipe-pct', `${(wipe * 100).toFixed(2)}%`);
+    setRoot('--wipe-signal', `${(wipe * 38).toFixed(2)}%`);
+    setRoot('--wipe-interface-x', `${(wipe * 48).toFixed(2)}%`);
+    setRoot('--wipe-interface-y', `${(wipe * 20).toFixed(2)}%`);
+    setRoot('--wipe-team', `${(wipe * 55).toFixed(2)}%`);
+    setRoot('--impact', impact.toFixed(3));
+    setRoot('--stage-x', `${lerp(0, -220, totalProgress).toFixed(2)}px`);
+    setRoot('--stage-y', `${lerp(0, 140, totalProgress).toFixed(2)}px`);
+    setRoot('--stage-scale', (1 + totalProgress * 0.12 + impact * .04 + fxState.burst * .025).toFixed(4));
+    setRoot('--axis-scale', (0.64 + impact * 1.16).toFixed(3));
 
-    scenes.forEach((scene, index) => {
+    sceneEntries.forEach((entry, index) => {
+      const { scene, video } = entry;
       const distance = Math.abs(index - activeScene);
       const isActive = index === activeScene;
       const isAdjacent = distance === 1;
@@ -413,16 +451,23 @@
       const rotate = isActive ? lerp(.4, -1.35, activeLocal) + impact * 1.8 + fxState.velocity * .55 + fxState.burst * .8 : direction * (3.1 + fxState.burst * 2);
       const dim = isActive ? clamp(.34 - activeLocal * .1 - impact * .08 - fxState.speed * .04, .16, .36) : .62;
       const scan = isActive ? .16 + impact * .5 + fxState.speed * .22 + fxState.burst * .34 : .08;
-      const video = scene.querySelector('video');
+      const isNear = isActive || isAdjacent;
 
-      scene.style.opacity = visible.toFixed(3);
-      scene.style.setProperty('--scene-x', `${x.toFixed(2)}px`);
-      scene.style.setProperty('--scene-y', `${y.toFixed(2)}px`);
-      scene.style.setProperty('--scene-scale', depth.toFixed(4));
-      scene.style.setProperty('--scene-rotate', `${rotate.toFixed(3)}deg`);
-      scene.style.setProperty('--scene-dim', dim.toFixed(3));
-      scene.style.setProperty('--scene-scan', scan.toFixed(3));
-      scene.classList.toggle('is-active', isActive);
+      setStyle(scene, 'opacity', visible.toFixed(3));
+      setStyle(scene, '--scene-x', `${x.toFixed(2)}px`);
+      setStyle(scene, '--scene-y', `${y.toFixed(2)}px`);
+      setStyle(scene, '--scene-scale', depth.toFixed(4));
+      setStyle(scene, '--scene-rotate', `${rotate.toFixed(3)}deg`);
+      setStyle(scene, '--scene-dim', dim.toFixed(3));
+      setStyle(scene, '--scene-scan', scan.toFixed(3));
+      if (entry.active !== isActive) {
+        scene.classList.toggle('is-active', isActive);
+        entry.active = isActive;
+      }
+      if (entry.near !== isNear) {
+        scene.classList.toggle('is-near', isNear);
+        entry.near = isNear;
+      }
       syncVideo(video, isActive, impact);
     });
 
@@ -436,11 +481,11 @@
       const y = lerp(72, -12, localSmooth) - leavingSmooth * 72;
       const copy = chapter.querySelector('.chapter__copy');
 
-      chapter.style.setProperty('--line-scale', (localSmooth * (1 - leavingSmooth * .74)).toFixed(3));
+      setStyle(chapter, '--line-scale', (localSmooth * (1 - leavingSmooth * .74)).toFixed(3));
       if (copy) {
-        copy.style.setProperty('--copy-opacity', opacity.toFixed(3));
-        copy.style.setProperty('--copy-y', `${y.toFixed(2)}px`);
-        copy.style.setProperty('--copy-scale', (lerp(.985, 1, localSmooth) + leavingSmooth * .035).toFixed(4));
+        setStyle(copy, '--copy-opacity', opacity.toFixed(3));
+        setStyle(copy, '--copy-y', `${y.toFixed(2)}px`);
+        setStyle(copy, '--copy-scale', (lerp(.985, 1, localSmooth) + leavingSmooth * .035).toFixed(4));
       }
       chapter.classList.toggle('is-active', index === activeChapter);
     });
@@ -476,24 +521,105 @@
     const fxElapsed = Math.max(16, time - lastFxDraw);
     const decayStep = clamp(fxElapsed / 42, .5, 6);
     lastFxDraw = time;
+    window.__axisFxFrames = (window.__axisFxFrames || 0) + 1;
     ctx.clearRect(0, 0, canvasW, canvasH);
     ctx.globalCompositeOperation = 'lighter';
 
-    const axisY = canvasH * (.54 - impact * .08);
     ctx.save();
-    ctx.translate(canvasW * .5, axisY);
-    ctx.rotate(-0.22 + impact * .18 + velocity * .035 + burst * .035);
-    const gradient = ctx.createLinearGradient(-canvasW * .52, 0, canvasW * .52, 0);
-    gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0)`);
-    gradient.addColorStop(.45, `rgba(255, 255, 255, ${.16 + impact * .46})`);
-    gradient.addColorStop(.58, `rgba(${r}, ${g}, ${b}, ${.2 + impact * .48})`);
-    gradient.addColorStop(1, 'rgba(255, 61, 113, 0)');
-    ctx.strokeStyle = gradient;
-    ctx.lineWidth = 1.2 + impact * 5.5 + speed * 3.4 + burst * 3.2;
-    ctx.beginPath();
-    ctx.moveTo(-canvasW * .54, Math.sin(t) * 14);
-    ctx.bezierCurveTo(-canvasW * .2, -58 - impact * 40 - speed * 28, canvasW * .18, 72 + impact * 32 + speed * 22, canvasW * .56, Math.cos(t) * 18);
-    ctx.stroke();
+    if (mode === 'axis') {
+      const axisY = canvasH * (.54 - impact * .08);
+      ctx.translate(canvasW * .56, axisY);
+      ctx.rotate(-0.22 + impact * .18 + velocity * .035 + burst * .035);
+      const gradient = ctx.createLinearGradient(-canvasW * .52, 0, canvasW * .52, 0);
+      gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0)`);
+      gradient.addColorStop(.45, `rgba(255, 255, 255, ${.16 + impact * .46})`);
+      gradient.addColorStop(.58, `rgba(${r}, ${g}, ${b}, ${.2 + impact * .48})`);
+      gradient.addColorStop(1, 'rgba(255, 61, 113, 0)');
+      ctx.strokeStyle = gradient;
+      ctx.lineWidth = 1.2 + impact * 5.5 + speed * 3.4 + burst * 3.2;
+      ctx.beginPath();
+      ctx.moveTo(-canvasW * .54, Math.sin(t) * 14);
+      ctx.bezierCurveTo(-canvasW * .2, -58 - impact * 40 - speed * 28, canvasW * .18, 72 + impact * 32 + speed * 22, canvasW * .56, Math.cos(t) * 18);
+      ctx.stroke();
+    } else if (mode === 'signal') {
+      ctx.translate(canvasW * .5, canvasH * .42);
+      const beam = ctx.createLinearGradient(-canvasW * .42, 0, canvasW * .52, 0);
+      beam.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0)`);
+      beam.addColorStop(.78, `rgba(255,255,255,${.18 + cut * .5})`);
+      beam.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
+      ctx.strokeStyle = beam;
+      ctx.lineWidth = 2 + speed * 5 + burst * 6;
+      for (let i = 0; i < 4; i += 1) {
+        ctx.beginPath();
+        const y = Math.sin(t * 2 + i) * (18 + speed * 32) + i * 6;
+        ctx.moveTo(-canvasW * .46, y);
+        ctx.bezierCurveTo(-canvasW * .16, y - 46 - cut * 50, canvasW * .16, y + 44 + cut * 40, canvasW * .5, y - 4);
+        ctx.stroke();
+      }
+    } else if (mode === 'interface') {
+      ctx.translate(canvasW * .58, canvasH * .42);
+      ctx.strokeStyle = `rgba(0, 229, 194, ${.14 + cut * .32})`;
+      ctx.lineWidth = 1 + cut * 2;
+      for (let i = 0; i < 7; i += 1) {
+        const w = canvasW * (.1 + i * .018 + cut * .04);
+        const h = canvasH * (.04 + (i % 3) * .018);
+        ctx.strokeRect(-w * .5 + Math.sin(t + i) * 18, -h * .5 + (i - 3) * 34, w, h);
+      }
+    } else if (mode === 'portal') {
+      ctx.translate(canvasW * .64, canvasH * .5);
+      ctx.rotate(t * .18 + velocity * .05);
+      ctx.strokeStyle = `rgba(255,255,255,${.12 + cut * .38})`;
+      for (let i = 0; i < 5; i += 1) {
+        ctx.lineWidth = .8 + i * .28 + cut * 2;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, canvasH * (.14 + i * .06 + cut * .08), canvasH * (.23 + i * .075 + burst * .04), i * .34, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    } else if (mode === 'team') {
+      ctx.translate(canvasW * .5, canvasH * .5);
+      ctx.strokeStyle = `rgba(255, 61, 113, ${.1 + cut * .26})`;
+      ctx.lineWidth = 1 + cut * 3;
+      for (let i = -4; i <= 4; i += 1) {
+        const x = i * canvasW * .09 + Math.sin(t + i) * 20;
+        ctx.beginPath();
+        ctx.moveTo(x, -canvasH * .55);
+        ctx.lineTo(x + velocity * 18 + burst * i * 3, canvasH * .55);
+        ctx.stroke();
+      }
+    } else if (mode === 'growth') {
+      ctx.translate(0, 0);
+      const growth = ctx.createLinearGradient(canvasW * .16, canvasH * .78, canvasW * .82, canvasH * .28);
+      growth.addColorStop(0, 'rgba(255,196,0,0)');
+      growth.addColorStop(.62, `rgba(255,196,0,${.18 + cut * .45})`);
+      growth.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.strokeStyle = growth;
+      ctx.lineWidth = 2 + cut * 5;
+      ctx.beginPath();
+      ctx.moveTo(canvasW * .15, canvasH * .74);
+      ctx.bezierCurveTo(canvasW * .34, canvasH * (.72 - cut * .1), canvasW * .58, canvasH * (.42 - cut * .08), canvasW * .82, canvasH * .28);
+      ctx.stroke();
+    } else if (mode === 'contact') {
+      ctx.translate(canvasW * .5, canvasH * .5);
+      ctx.rotate(-0.42 + velocity * .05);
+      const beam = ctx.createLinearGradient(-canvasW * .42, 0, canvasW * .46, 0);
+      beam.addColorStop(0, 'rgba(0,229,194,0)');
+      beam.addColorStop(.48, `rgba(255,255,255,${.16 + cut * .38})`);
+      beam.addColorStop(1, 'rgba(0,229,194,0)');
+      ctx.strokeStyle = beam;
+      ctx.lineWidth = 3 + cut * 9;
+      ctx.beginPath();
+      ctx.moveTo(-canvasW * .42, 0);
+      ctx.lineTo(canvasW * .46, 0);
+      ctx.stroke();
+    } else if (mode === 'ink') {
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = `rgba(245, 247, 250, ${.06 + cut * .12})`;
+      for (let i = 0; i < 4; i += 1) {
+        ctx.beginPath();
+        ctx.ellipse(canvasW * (.26 + i * .14), canvasH * (.42 + Math.sin(t + i) * .08), canvasH * (.16 + i * .04), canvasH * (.08 + i * .025), -0.28 + i * .09, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
     ctx.restore();
 
     particles.forEach((p, i) => {
@@ -540,7 +666,7 @@
       ctx.restore();
     }
 
-    if (impact > .04) {
+    if (impact > .04 && (mode === 'axis' || mode === 'portal')) {
       ctx.globalAlpha = impact;
       ctx.strokeStyle = `rgba(255, 255, 255, ${.24 + impact * .32})`;
       ctx.lineWidth = 1 + impact * 3;
@@ -666,12 +792,18 @@
     fxState.burst = lerp(fxState.burst, 0, clamp(.28 * decayStep));
     fxState.cut = clamp(Math.max(fxState.impact * .92, fxState.speed * .7, fxState.burst * .82));
     applyKineticVars();
-    if (fxState.speed > .012 || Math.abs(fxState.velocity) > .012 || fxState.burst > .012 || fxState.cut > .012) requestUpdate();
-
-    requestAnimationFrame(renderFx);
+    const keepFxAlive = fxState.speed > .012 || Math.abs(fxState.velocity) > .012 || fxState.burst > .012 || fxState.cut > .012 || fxState.impact > .012;
+    if (keepFxAlive) {
+      requestUpdate();
+      requestAnimationFrame(renderFx);
+    } else {
+      fxRunning = false;
+      lastFxDraw = 0;
+    }
   };
 
   const requestUpdate = () => {
+    requestFx();
     if (ticking) return;
     ticking = true;
     requestAnimationFrame(update);
@@ -686,8 +818,9 @@
   window.addEventListener('scroll', requestUpdate, { passive: true });
 
   window.addEventListener('pointermove', (event) => {
-    root.style.setProperty('--pointer-x', `${event.clientX}px`);
-    root.style.setProperty('--pointer-y', `${event.clientY}px`);
+    setRoot('--pointer-x', `${event.clientX}px`);
+    setRoot('--pointer-y', `${event.clientY}px`);
+    requestFx();
   }, { passive: true });
 
   document.addEventListener('visibilitychange', () => {
@@ -708,5 +841,5 @@
   measure();
   resizeCanvas();
   update();
-  if (!reduced) requestAnimationFrame(renderFx);
+  requestFx();
 })();
