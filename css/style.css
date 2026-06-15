@@ -571,7 +571,7 @@ html[data-motion="growth"] .stage__flare {
   z-index: 15;
   overflow: hidden;
   pointer-events: none;
-  opacity: calc(var(--impact) * .24 + var(--speed) * .56 + var(--burst) * .28);
+  opacity: calc(var(--impact) * .18 + var(--burst) * .16);
   mix-blend-mode: screen;
 }
 
@@ -600,9 +600,9 @@ html[data-motion="growth"] .stage__flare {
 .transition-field {
   position: fixed;
   inset: 0;
-  z-index: 40;
+  z-index: 4;
   pointer-events: none;
-  opacity: calc(var(--wipe) * .96);
+  opacity: calc(var(--wipe) * .58);
   background:
     radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 1), transparent 15%),
     conic-gradient(from 20deg at 50% 50%, rgba(0, 229, 194, .56), rgba(106, 124, 255, .52), rgba(255, 61, 113, .46), rgba(255, 196, 0, .36), rgba(0, 229, 194, .56)),
@@ -615,9 +615,9 @@ html[data-motion="growth"] .stage__flare {
 .scene-gate {
   position: fixed;
   inset: 0;
-  z-index: 41;
+  z-index: 5;
   pointer-events: none;
-  opacity: calc(var(--wipe) * .42 + var(--speed) * .28 + var(--burst) * .2);
+  opacity: calc(var(--wipe) * .34 + var(--burst) * .12);
   mix-blend-mode: screen;
   contain: layout paint;
 }
@@ -646,10 +646,10 @@ html[data-motion="growth"] .stage__flare {
 .scene-shutter {
   position: fixed;
   inset: 0;
-  z-index: 42;
+  z-index: 6;
   overflow: hidden;
   pointer-events: none;
-  opacity: calc(var(--cut) * .72);
+  opacity: calc(var(--cut) * .46);
   mix-blend-mode: screen;
   contain: layout paint;
 }
@@ -658,7 +658,7 @@ html[data-motion="growth"] .stage__flare {
   position: absolute;
   left: -35vw;
   width: 170vw;
-  height: 12vh;
+  height: 8vh;
   background:
     linear-gradient(90deg, transparent 0 10%, rgba(255, 255, 255, .28), hsla(var(--scene-hue), 100%, 64%, .22), transparent 78%),
     repeating-linear-gradient(90deg, transparent 0 28px, rgba(255, 255, 255, .14) 28px 29px, transparent 29px 56px);
@@ -676,7 +676,7 @@ html[data-motion="growth"] .stage__flare {
 .scene-shutter span:nth-child(6) { top: 78vh; --shutter-dir: 1; opacity: .44; }
 
 html[data-motion="ink"] .transition-field {
-  opacity: calc(var(--cut) * .54);
+  opacity: calc(var(--cut) * .32);
   background:
     radial-gradient(ellipse at 38% 42%, rgba(255, 255, 255, .92), rgba(255, 255, 255, .36) 26%, transparent 54%),
     radial-gradient(ellipse at 74% 58%, rgba(5, 7, 10, .38), transparent 42%),
@@ -686,16 +686,16 @@ html[data-motion="ink"] .transition-field {
 }
 
 html[data-motion="ink"] .scene-shutter span {
-  height: 18vh;
+  height: 8vh;
   background:
-    linear-gradient(90deg, transparent 0 12%, rgba(255, 255, 255, .58), rgba(5, 7, 10, .14), transparent 78%);
+    linear-gradient(90deg, transparent 0 12%, rgba(255, 255, 255, .34), rgba(5, 7, 10, .1), transparent 78%);
   transform:
     translate3d(calc((1 - var(--cut)) * var(--shutter-dir, 1) * 74vw + var(--velocity) * 44px), 0, 0)
     skewY(-3deg);
 }
 
 html[data-motion="signal"] .transition-field {
-  opacity: calc(var(--cut) * .68);
+  opacity: calc(var(--cut) * .42);
   background:
     radial-gradient(circle at 45% 48%, rgba(255, 255, 255, .86), transparent 9%),
     repeating-radial-gradient(circle at 50% 50%, hsla(var(--scene-hue), 100%, 68%, .2) 0 1px, transparent 1px 42px),
@@ -711,7 +711,7 @@ html[data-motion="signal"] .scene-shutter span {
 }
 
 html[data-motion="interface"] .transition-field {
-  opacity: calc(var(--cut) * .62);
+  opacity: calc(var(--cut) * .38);
   background:
     linear-gradient(90deg, rgba(0, 229, 194, .18), transparent 22%, rgba(255, 255, 255, .2) 50%, transparent 78%, rgba(0, 229, 194, .14)),
     repeating-linear-gradient(0deg, rgba(255, 255, 255, .16) 0 1px, transparent 1px 18px),
@@ -720,7 +720,7 @@ html[data-motion="interface"] .transition-field {
 }
 
 html[data-motion="interface"] .scene-shutter span {
-  height: 8vh;
+  height: 5vh;
   background:
     linear-gradient(90deg, transparent, rgba(0, 229, 194, .28), rgba(255, 255, 255, .18), transparent),
     repeating-linear-gradient(90deg, transparent 0 14px, rgba(255, 255, 255, .18) 14px 15px, transparent 15px 28px);
@@ -730,7 +730,7 @@ html[data-motion="interface"] .scene-shutter span {
 }
 
 html[data-motion="portal"] .transition-field {
-  opacity: calc(var(--cut) * .7);
+  opacity: calc(var(--cut) * .42);
   background:
     radial-gradient(circle at 58% 50%, transparent 0 18%, rgba(255, 255, 255, .5) 19%, transparent 21% 30%, hsla(var(--scene-hue), 100%, 68%, .46) 31%, transparent 38%),
     conic-gradient(from calc(var(--section-local) * 360deg), transparent, rgba(255, 255, 255, .32), transparent, hsla(var(--scene-hue), 100%, 65%, .3), transparent);
@@ -742,7 +742,7 @@ html[data-motion="portal"] .stage__vortex {
 }
 
 html[data-motion="team"] .transition-field {
-  opacity: calc(var(--cut) * .56);
+  opacity: calc(var(--cut) * .34);
   background:
     linear-gradient(90deg, rgba(255, 61, 113, .22), transparent 26%, rgba(255, 255, 255, .2), transparent 74%, rgba(255, 61, 113, .2)),
     repeating-linear-gradient(90deg, rgba(255, 255, 255, .22) 0 1px, transparent 1px 9vw);
@@ -768,7 +768,7 @@ html[data-motion="team"] .scene-shutter span:nth-child(5) { left: 74vw; opacity:
 html[data-motion="team"] .scene-shutter span:nth-child(6) { left: 90vw; opacity: .36; }
 
 html[data-motion="growth"] .transition-field {
-  opacity: calc(var(--cut) * .64);
+  opacity: calc(var(--cut) * .38);
   background:
     radial-gradient(circle at 74% 35%, rgba(255, 196, 0, .62), transparent 14%),
     linear-gradient(145deg, transparent 0 38%, rgba(255, 196, 0, .42) 49%, transparent 60%),
@@ -788,7 +788,7 @@ html[data-motion="growth"] .scene-shutter span {
 }
 
 html[data-motion="contact"] .transition-field {
-  opacity: calc(var(--cut) * .52);
+  opacity: calc(var(--cut) * .34);
   background:
     linear-gradient(115deg, transparent 0 30%, rgba(255, 255, 255, .66) 46%, rgba(0, 229, 194, .22) 54%, transparent 70%),
     radial-gradient(circle at 70% 55%, rgba(255, 255, 255, .26), transparent 26%);
@@ -796,7 +796,7 @@ html[data-motion="contact"] .transition-field {
 }
 
 html[data-motion="contact"] .scene-gate {
-  opacity: calc(var(--cut) * .48 + var(--speed) * .12);
+  opacity: calc(var(--cut) * .32);
 }
 
 html[data-motion="contact"] .scene-shutter span {
@@ -831,13 +831,13 @@ html[data-motion="contact"] .scene-shutter span:nth-child(odd) {
   background:
     linear-gradient(90deg, #05070a 0 10%, transparent 36%, transparent 64%, #05070a 90% 100%),
     repeating-linear-gradient(0deg, rgba(255, 255, 255, .18) 0 1px, transparent 1px 8px);
-  opacity: .5;
+  opacity: .32;
 }
 
 .grain {
   position: fixed;
   inset: -50%;
-  z-index: 70;
+  z-index: 9;
   width: 200%;
   height: 200%;
   pointer-events: none;
@@ -1626,7 +1626,7 @@ html[data-motion="contact"] .scene-shutter span:nth-child(odd) {
   .stage__depth,
   .stage__slices,
   .stage__vortex {
-    opacity: calc(var(--impact) * .2 + var(--speed) * .25 + var(--burst) * .16);
+    opacity: calc(var(--impact) * .18 + var(--burst) * .14);
   }
 
   .chapter {

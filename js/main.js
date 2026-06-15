@@ -454,7 +454,7 @@
     fxState.scroll = scrollY;
     fxState.hue = sceneHues[activeScene] || sceneHues[0];
     fxState.motion = motionModes[activeScene] || motionModes[0];
-    fxState.cut = clamp(Math.max(impact * .92, fxState.speed * .7, fxState.burst * .82));
+    fxState.cut = clamp(Math.max(impact * .92, fxState.burst * .62));
     applyKineticVars();
 
     if (progressBar) {
@@ -852,7 +852,7 @@
     fxState.velocity = lerp(fxState.velocity, 0, clamp(.12 * decayStep));
     fxState.speed = lerp(fxState.speed, 0, clamp(.14 * decayStep));
     fxState.burst = lerp(fxState.burst, 0, clamp(.28 * decayStep));
-    fxState.cut = clamp(Math.max(fxState.impact * .92, fxState.speed * .7, fxState.burst * .82));
+    fxState.cut = clamp(Math.max(fxState.impact * .92, fxState.burst * .62));
     applyKineticVars();
     const keepFxAlive = fxState.speed > .012 || Math.abs(fxState.velocity) > .012 || fxState.burst > .012 || fxState.cut > .012 || fxState.impact > .012;
     if (keepFxAlive) {
