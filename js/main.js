@@ -41,6 +41,7 @@
   let lastTime = performance.now();
   let lastFxDraw = 0;
   let fxRunning = false;
+  let stableChapterIndex = 0;
   const styleCache = new WeakMap();
   const fxState = {
     progress: 0,
@@ -310,6 +311,7 @@
       top: chapter.offsetTop,
       height: chapter.offsetHeight,
     }));
+    stableChapterIndex = Math.min(stableChapterIndex, Math.max(0, metrics.length - 1));
   };
 
   const resizeCanvas = () => {
@@ -326,11 +328,19 @@
 
   const currentSceneIndex = (scrollY, vh) => {
     const probe = scrollY + vh * 0.5;
-    let active = 0;
-    metrics.forEach((m, i) => {
-      if (probe >= m.top) active = i;
-    });
-    return active;
+    if (!metrics.length) return 0;
+    stableChapterIndex = Math.min(stableChapterIndex, metrics.length - 1);
+    const band = vh * 0.14;
+
+    while (stableChapterIndex > 0 && probe < metrics[stableChapterIndex].top - band) {
+      stableChapterIndex -= 1;
+    }
+
+    while (stableChapterIndex < metrics.length - 1 && probe >= metrics[stableChapterIndex + 1].top + band) {
+      stableChapterIndex += 1;
+    }
+
+    return stableChapterIndex;
   };
 
   const transitionPulse = (scrollY, vh) => {

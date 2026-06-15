@@ -861,7 +861,10 @@ html[data-motion="contact"] .scene-shutter span:nth-child(odd) {
   padding: 0 42px;
   color: #fff;
   letter-spacing: 0;
-  mix-blend-mode: difference;
+  text-shadow: 0 1px 18px rgba(0, 0, 0, .72);
+  isolation: isolate;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .brand {
@@ -902,7 +905,8 @@ html[data-motion="contact"] .scene-shutter span:nth-child(odd) {
   bottom: 28px;
   height: 1px;
   background: rgba(255, 255, 255, .18);
-  mix-blend-mode: difference;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .progress__bar {
@@ -925,9 +929,12 @@ html[data-motion="contact"] .scene-shutter span:nth-child(odd) {
   color: #fff;
   font-size: 11px;
   line-height: 1;
-  mix-blend-mode: difference;
+  text-shadow: 0 1px 18px rgba(0, 0, 0, .72);
+  isolation: isolate;
   pointer-events: none;
-  transform: translate3d(calc(var(--velocity) * -18px), 0, 0);
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  contain: paint;
 }
 
 .scene-readout__num {
