@@ -796,6 +796,30 @@ html[data-motion="contact"] .scene-gate {
   transform: translate3d(calc(var(--velocity) * 12px), 0, 0);
 }
 
+.typo-token-list {
+  overflow: hidden;
+}
+
+.typo-token {
+  display: inline-block;
+  opacity: 0;
+  transform: translate3d(0, .9em, 0);
+  transition:
+    opacity .52s cubic-bezier(.16, 1, .3, 1),
+    transform .72s cubic-bezier(.16, 1, .3, 1);
+  transition-delay: calc(var(--token-index, 0) * 28ms);
+}
+
+.typo-token--space {
+  min-width: .34em;
+}
+
+.chapter.is-active .typo-token {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  will-change: opacity, transform;
+}
+
 .chapter__title {
   margin: 0;
   font-size: 104px;
@@ -809,8 +833,185 @@ html[data-motion="contact"] .scene-gate {
   overflow-wrap: normal;
 }
 
-.chapter__title span {
+.chapter__title > span {
   display: block;
+}
+
+.typo-line {
+  position: relative;
+  overflow: hidden;
+  padding: .03em .04em .11em;
+  margin: -.03em -.04em -.08em;
+  perspective: 720px;
+  transform-style: preserve-3d;
+}
+
+.typo-line::before,
+.typo-line::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+}
+
+.typo-line::before {
+  inset: .02em -12% .1em;
+  z-index: 2;
+  opacity: 0;
+  transform: translate3d(-112%, 0, 0) skewX(-14deg);
+  background: linear-gradient(90deg, transparent, hsla(var(--scene-hue), 100%, 68%, .08), rgba(255, 255, 255, .58), transparent);
+  mix-blend-mode: screen;
+  transition:
+    opacity .2s ease,
+    transform .92s cubic-bezier(.16, 1, .3, 1);
+  transition-delay: calc(var(--line-index, 0) * 86ms + 34ms);
+}
+
+.typo-line::after {
+  left: 0;
+  right: 0;
+  bottom: .08em;
+  height: 2px;
+  opacity: 0;
+  transform: scaleX(0);
+  transform-origin: left center;
+  background: linear-gradient(90deg, transparent, hsla(var(--scene-hue), 100%, 68%, .75), rgba(255, 255, 255, .8), transparent);
+  transition:
+    opacity .45s cubic-bezier(.16, 1, .3, 1),
+    transform .82s cubic-bezier(.16, 1, .3, 1);
+  transition-delay: calc(var(--line-index, 0) * 70ms + 180ms);
+}
+
+.typo-char {
+  display: inline-block;
+  position: relative;
+  z-index: 1;
+  opacity: 0;
+  transform:
+    translate3d(var(--char-x, 0), var(--char-y, 1.08em), var(--char-z, 0))
+    rotateX(var(--char-rotate-x, 58deg))
+    rotateY(var(--char-rotate-y, 0deg))
+    rotateZ(var(--char-rotate-z, 0deg))
+    scale(var(--char-scale, .98));
+  transform-origin: 50% 82%;
+  filter: blur(var(--char-blur, 5px));
+  transition:
+    opacity .58s cubic-bezier(.16, 1, .3, 1),
+    transform .92s cubic-bezier(.16, 1, .3, 1),
+    filter .72s cubic-bezier(.16, 1, .3, 1);
+  transition-delay: var(--char-delay, 0ms);
+}
+
+.typo-char::after {
+  content: attr(data-glyph);
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  color: hsla(var(--scene-hue), 100%, 70%, .9);
+  transform: translate3d(.07em, 0, 0);
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.typo-char--space {
+  width: .28em;
+}
+
+.chapter.is-active .typo-line::before {
+  opacity: calc(.18 + var(--speed) * .18);
+  transform: translate3d(112%, 0, 0) skewX(-14deg);
+}
+
+.chapter.is-active .typo-line::after {
+  opacity: calc(.28 + var(--cut) * .25);
+  transform: scaleX(1);
+}
+
+.chapter.is-active .typo-char {
+  opacity: 1;
+  filter: blur(0);
+  transform: translate3d(0, 0, 0) rotateX(0) rotateZ(0);
+  will-change: opacity, transform, filter;
+}
+
+html[data-motion="ink"] .chapter.is-active .typo-line::after {
+  opacity: .18;
+  background: linear-gradient(90deg, transparent, rgba(5, 7, 10, .46), transparent);
+}
+
+html[data-motion="ink"] .chapter.is-active .typo-line::before {
+  opacity: .34;
+  background: linear-gradient(90deg, transparent, rgba(5, 7, 10, .62), rgba(255, 255, 255, .5), transparent);
+  mix-blend-mode: multiply;
+  transform: translate3d(112%, 0, 0) skewX(-9deg);
+}
+
+html[data-motion="ink"] .chapter.is-active .typo-char {
+  transition-duration: .78s, 1.08s, .92s;
+}
+
+html[data-motion="signal"] .chapter.is-active .typo-char {
+  text-shadow: 0 0 18px hsla(var(--scene-hue), 100%, 70%, .34);
+}
+
+html[data-motion="signal"] .chapter.is-active .typo-char::after {
+  animation: typo-signal-echo 1.1s steps(2, end) both;
+  animation-delay: calc(var(--char-delay, 0ms) + 90ms);
+}
+
+html[data-motion="interface"] .chapter.is-active .typo-line::after {
+  height: 1px;
+  opacity: calc(.2 + var(--cut) * .36);
+  background:
+    linear-gradient(90deg, transparent, rgba(0, 229, 194, .82), rgba(255, 255, 255, .75), transparent),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, .3) 0 1px, transparent 1px 12px);
+}
+
+html[data-motion="interface"] .chapter.is-active .typo-line::before {
+  opacity: .48;
+  background:
+    linear-gradient(90deg, transparent, rgba(0, 229, 194, .14), rgba(255, 255, 255, .55), transparent),
+    repeating-linear-gradient(90deg, transparent 0 9px, rgba(255, 255, 255, .36) 9px 10px);
+  transform: translate3d(112%, 0, 0) skewX(0deg);
+}
+
+html[data-motion="portal"] .chapter.is-active .typo-char {
+  text-shadow: 0 0 22px rgba(106, 124, 255, .3);
+}
+
+html[data-motion="portal"] .chapter.is-active .typo-char::after {
+  color: rgba(106, 124, 255, .7);
+  animation: typo-portal-echo 1.35s cubic-bezier(.16, 1, .3, 1) both;
+  animation-delay: calc(var(--char-delay, 0ms) + 70ms);
+}
+
+html[data-motion="team"] .chapter.is-active .typo-line::after {
+  background: linear-gradient(90deg, transparent, rgba(255, 61, 113, .7), rgba(255, 255, 255, .7), transparent);
+}
+
+html[data-motion="team"] .chapter.is-active .typo-line::before {
+  opacity: .26;
+  background: linear-gradient(90deg, transparent, rgba(255, 61, 113, .22), rgba(255, 255, 255, .5), transparent);
+}
+
+html[data-motion="growth"] .chapter.is-active .typo-line::after {
+  opacity: calc(.3 + var(--cut) * .25);
+  background: linear-gradient(90deg, transparent, rgba(255, 196, 0, .9), rgba(255, 255, 255, .55), transparent);
+}
+
+html[data-motion="growth"] .chapter.is-active .typo-line::before {
+  opacity: .32;
+  background: linear-gradient(90deg, transparent, rgba(255, 196, 0, .24), rgba(255, 255, 255, .58), transparent);
+  transform: translate3d(112%, 0, 0) skewX(-24deg);
+}
+
+html[data-motion="contact"] .chapter.is-active .typo-char {
+  text-shadow: 0 0 18px rgba(255, 255, 255, .28);
+}
+
+html[data-motion="contact"] .chapter.is-active .typo-char::after {
+  color: rgba(0, 229, 194, .76);
+  animation: typo-contact-cut .82s steps(2, end) both;
+  animation-delay: calc(var(--char-delay, 0ms) + 45ms);
 }
 
 .chapter__title--jp {
@@ -819,7 +1020,7 @@ html[data-motion="contact"] .scene-gate {
   text-transform: none;
 }
 
-.chapter__title--jp span {
+.chapter__title--jp > span {
   white-space: nowrap;
 }
 
@@ -857,6 +1058,30 @@ html[data-motion="contact"] .scene-gate {
   color: var(--muted);
 }
 
+.typo-mask {
+  display: block;
+  overflow: hidden;
+}
+
+.typo-mask__inner {
+  display: block;
+  opacity: 0;
+  transform: translate3d(0, 1.35em, 0);
+  clip-path: inset(0 0 100% 0);
+  transition:
+    opacity .72s cubic-bezier(.16, 1, .3, 1),
+    transform .9s cubic-bezier(.16, 1, .3, 1),
+    clip-path .9s cubic-bezier(.16, 1, .3, 1);
+  transition-delay: var(--text-delay, 0ms);
+}
+
+.chapter.is-active .typo-mask__inner {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  clip-path: inset(0 0 0 0);
+  will-change: opacity, transform, clip-path;
+}
+
 .chapter__meta {
   display: flex;
   flex-wrap: wrap;
@@ -872,6 +1097,22 @@ html[data-motion="contact"] .scene-gate {
   background: rgba(255, 255, 255, .04);
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
+}
+
+.typo-chip {
+  opacity: 0;
+  transform: translate3d(0, 16px, 0);
+  transition:
+    opacity .5s cubic-bezier(.16, 1, .3, 1),
+    transform .65s cubic-bezier(.16, 1, .3, 1),
+    border-color .45s ease;
+  transition-delay: calc(430ms + var(--token-index, 0) * 55ms);
+}
+
+.chapter.is-active .typo-chip {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  will-change: opacity, transform;
 }
 
 .chapter--ink .chapter__meta span {
@@ -905,6 +1146,68 @@ html[data-motion="contact"] .scene-gate {
   backdrop-filter: blur(12px);
   font-size: 14px;
   font-weight: 600;
+  opacity: 0;
+  transform: translate3d(0, 22px, 0);
+  transition:
+    opacity .62s cubic-bezier(.16, 1, .3, 1),
+    transform .76s cubic-bezier(.16, 1, .3, 1),
+    background .25s ease,
+    color .25s ease;
+  transition-delay: 520ms;
+}
+
+.chapter.is-active .chapter__button {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+@keyframes typo-signal-echo {
+  0%,
+  12% {
+    opacity: .75;
+    transform: translate3d(.08em, -.03em, 0);
+  }
+  13%,
+  30% {
+    opacity: .18;
+    transform: translate3d(-.06em, .02em, 0);
+  }
+  31%,
+  100% {
+    opacity: 0;
+    transform: translate3d(.12em, 0, 0);
+  }
+}
+
+@keyframes typo-portal-echo {
+  0% {
+    opacity: .42;
+    transform: translate3d(.16em, 0, 0) scale(1.08);
+  }
+  42% {
+    opacity: .16;
+    transform: translate3d(-.1em, .02em, 0) scale(1.02);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(.22em, 0, 0) scale(1);
+  }
+}
+
+@keyframes typo-contact-cut {
+  0% {
+    opacity: .64;
+    transform: translate3d(.1em, 0, 0);
+  }
+  18% {
+    opacity: .2;
+    transform: translate3d(-.08em, 0, 0);
+  }
+  38%,
+  100% {
+    opacity: 0;
+    transform: translate3d(.16em, 0, 0);
+  }
 }
 
 .chapter__button span {
@@ -1126,6 +1429,23 @@ html[data-motion="contact"] .scene-gate {
   html { scroll-behavior: auto; }
   .grain { animation: none; }
   .scene__video { display: none; }
+  .typo-token,
+  .typo-char,
+  .typo-mask__inner,
+  .typo-chip,
+  .chapter__button {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    clip-path: none;
+    transition: none;
+    animation: none;
+  }
+  .typo-char::after,
+  .typo-line::before,
+  .typo-line::after {
+    display: none;
+  }
   .stage__depth,
   .stage__slices,
   .stage__vortex,

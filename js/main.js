@@ -62,6 +62,221 @@
     phase: i * 0.63,
   }));
 
+  const segmentText = (text, lang = 'ja') => {
+    if (window.Intl && typeof window.Intl.Segmenter === 'function') {
+      return Array.from(new Intl.Segmenter(lang, { granularity: 'grapheme' }).segment(text), (part) => part.segment);
+    }
+    return Array.from(text);
+  };
+
+  const getGlyphMotion = (mode, charIndex, lineIndex, charCount) => {
+    const center = charCount > 1 ? (charIndex / (charCount - 1)) - .5 : 0;
+    const seed = (((charIndex + 3) * 17 + (lineIndex + 5) * 29) % 23) / 22;
+    const scatter = (seed - .5) * 2;
+    const baseDelay = lineIndex * 78 + charIndex * 18;
+    const motion = {
+      x: `${scatter * .24}em`,
+      y: '1.08em',
+      z: '0px',
+      rotateX: '58deg',
+      rotateY: '0deg',
+      rotateZ: `${scatter * 3}deg`,
+      scale: '.98',
+      blur: '5px',
+      delay: `${baseDelay}ms`,
+    };
+
+    if (mode === 'ink') {
+      return {
+        ...motion,
+        x: `${-.24 - Math.abs(scatter) * .2}em`,
+        y: `${scatter * .08}em`,
+        rotateX: '0deg',
+        rotateY: `${-18 - Math.abs(scatter) * 10}deg`,
+        rotateZ: `${scatter * -2}deg`,
+        scale: '.94',
+        blur: '8px',
+        delay: `${lineIndex * 120 + charIndex * 24}ms`,
+      };
+    }
+
+    if (mode === 'signal') {
+      return {
+        ...motion,
+        x: `${scatter * .1}em`,
+        y: `${Math.abs(scatter) * .18}em`,
+        rotateX: '0deg',
+        rotateY: '0deg',
+        rotateZ: `${scatter * .8}deg`,
+        scale: '.99',
+        blur: '2px',
+        delay: `${lineIndex * 44 + charIndex * 9}ms`,
+      };
+    }
+
+    if (mode === 'interface') {
+      return {
+        ...motion,
+        x: `${center * -1.2}em`,
+        y: '0',
+        z: '-44px',
+        rotateX: '0deg',
+        rotateY: `${center * 42}deg`,
+        rotateZ: '0deg',
+        scale: '.92',
+        blur: '3px',
+        delay: `${lineIndex * 62 + Math.abs(center) * 170}ms`,
+      };
+    }
+
+    if (mode === 'portal') {
+      return {
+        ...motion,
+        x: `${center * 1.7}em`,
+        y: `${scatter * .26}em`,
+        z: '-80px',
+        rotateX: `${scatter * 18}deg`,
+        rotateY: `${center * -70}deg`,
+        rotateZ: `${center * 18}deg`,
+        scale: '.72',
+        blur: '7px',
+        delay: `${lineIndex * 58 + Math.abs(center) * 210}ms`,
+      };
+    }
+
+    if (mode === 'team') {
+      return {
+        ...motion,
+        x: `${-.55 + charIndex * .01}em`,
+        y: '.22em',
+        rotateX: '0deg',
+        rotateY: '-20deg',
+        rotateZ: `${scatter * 1.2}deg`,
+        scale: '.97',
+        blur: '4px',
+        delay: `${lineIndex * 88 + charIndex * 14}ms`,
+      };
+    }
+
+    if (mode === 'growth') {
+      return {
+        ...motion,
+        x: `${scatter * .12}em`,
+        y: '1.36em',
+        rotateX: '42deg',
+        rotateY: `${scatter * 10}deg`,
+        rotateZ: '0deg',
+        scale: '.9',
+        blur: '6px',
+        delay: `${lineIndex * 70 + charIndex * 16}ms`,
+      };
+    }
+
+    if (mode === 'contact') {
+      return {
+        ...motion,
+        x: `${center * -1.45}em`,
+        y: `${scatter * .18}em`,
+        z: '-24px',
+        rotateX: '0deg',
+        rotateY: `${center * 56}deg`,
+        rotateZ: `${scatter * 3.4}deg`,
+        scale: '.86',
+        blur: '5px',
+        delay: `${lineIndex * 70 + charIndex * 13}ms`,
+      };
+    }
+
+    return motion;
+  };
+
+  const splitTitle = (title, mode = 'axis') => {
+    if (!title || title.dataset.typoReady === 'true') return;
+    const lines = Array.from(title.children);
+    const label = lines.map((line) => (line.textContent || '').trim()).filter(Boolean).join(' ');
+
+    if (label) title.setAttribute('aria-label', label);
+
+    lines.forEach((line, lineIndex) => {
+      const text = line.textContent || '';
+      const chars = segmentText(text);
+      line.textContent = '';
+      line.classList.add('typo-line');
+      line.setAttribute('aria-hidden', 'true');
+      line.style.setProperty('--line-index', lineIndex);
+
+      chars.forEach((char, charIndex) => {
+        const motion = getGlyphMotion(mode, charIndex, lineIndex, chars.length);
+        const glyph = document.createElement('span');
+        glyph.className = char.trim() ? 'typo-char' : 'typo-char typo-char--space';
+        glyph.textContent = char === ' ' ? '\u00a0' : char;
+        glyph.dataset.glyph = char.trim() ? char : '';
+        glyph.style.setProperty('--char-index', charIndex);
+        glyph.style.setProperty('--char-x', motion.x);
+        glyph.style.setProperty('--char-y', motion.y);
+        glyph.style.setProperty('--char-z', motion.z);
+        glyph.style.setProperty('--char-rotate-x', motion.rotateX);
+        glyph.style.setProperty('--char-rotate-y', motion.rotateY);
+        glyph.style.setProperty('--char-rotate-z', motion.rotateZ);
+        glyph.style.setProperty('--char-scale', motion.scale);
+        glyph.style.setProperty('--char-blur', motion.blur);
+        glyph.style.setProperty('--char-delay', motion.delay);
+        line.appendChild(glyph);
+      });
+    });
+
+    title.dataset.typoReady = 'true';
+  };
+
+  const splitTokens = (element) => {
+    if (!element || element.dataset.typoReady === 'true') return;
+    const tokens = (element.textContent || '').split(/(\s+|\/)/).filter(Boolean);
+    element.textContent = '';
+    element.classList.add('typo-token-list');
+    tokens.forEach((token, tokenIndex) => {
+      const span = document.createElement('span');
+      span.className = token.trim() ? 'typo-token' : 'typo-token typo-token--space';
+      span.textContent = token.replace(/\s+/g, '\u00a0');
+      span.style.setProperty('--token-index', tokenIndex);
+      element.appendChild(span);
+    });
+    element.dataset.typoReady = 'true';
+  };
+
+  const maskTextBlock = (element, delay = 0) => {
+    if (!element || element.dataset.typoReady === 'true') return;
+    const text = element.textContent || '';
+    element.textContent = '';
+    element.classList.add('typo-mask');
+    element.style.setProperty('--text-delay', `${delay}ms`);
+
+    const inner = document.createElement('span');
+    inner.className = 'typo-mask__inner';
+    inner.textContent = text;
+    element.appendChild(inner);
+    element.dataset.typoReady = 'true';
+  };
+
+  const prepareTypography = () => {
+    chapters.forEach((chapter) => {
+      const sceneIndex = Number(chapter.dataset.scene || 0);
+      const mode = motionModes[sceneIndex] || 'axis';
+      chapter.dataset.typoMode = mode;
+      splitTokens(chapter.querySelector('.chapter__eyebrow'));
+      splitTitle(chapter.querySelector('.chapter__title'), mode);
+      maskTextBlock(chapter.querySelector('.chapter__lead'), 260);
+      maskTextBlock(chapter.querySelector('.chapter__body'), 390);
+      chapter.querySelectorAll('.chapter__meta span').forEach((item, index) => {
+        item.style.setProperty('--token-index', index);
+        item.classList.add('typo-chip');
+      });
+      const button = chapter.querySelector('.chapter__button');
+      if (button) {
+        button.classList.add('typo-button');
+      }
+    });
+  };
+
   const measure = () => {
     metrics = chapters.map((chapter) => ({
       id: chapter.id,
@@ -113,20 +328,25 @@
     if (root.dataset.motion !== fxState.motion) root.dataset.motion = fxState.motion;
   };
 
-  const syncVideo = (video, visible, isActive, impact) => {
+  const syncVideo = (video, isActive, impact) => {
     if (!video) return;
     if (reduced) {
-      video.pause();
+      if (!video.paused) video.pause();
       return;
     }
 
     if (isActive) {
-      video.playbackRate = isActive ? lerp(.82, 1.22, impact) : .62;
-      if (video.paused) {
+      const nextRate = lerp(.82, 1.22, impact);
+      if (Math.abs(video.playbackRate - nextRate) > .035) {
+        video.playbackRate = nextRate;
+      }
+      if (video.dataset.playState !== 'active' || video.paused) {
+        video.dataset.playState = 'active';
         const play = video.play();
         if (play && typeof play.catch === 'function') play.catch(() => {});
       }
-    } else {
+    } else if (video.dataset.playState !== 'paused') {
+      video.dataset.playState = 'paused';
       video.pause();
     }
   };
@@ -202,12 +422,8 @@
       scene.style.setProperty('--scene-rotate', `${rotate.toFixed(3)}deg`);
       scene.style.setProperty('--scene-dim', dim.toFixed(3));
       scene.style.setProperty('--scene-scan', scan.toFixed(3));
-      scene.style.setProperty('--scene-left', '0%');
-      scene.style.setProperty('--scene-right', '0%');
-      scene.style.setProperty('--scene-top', '0%');
-      scene.style.setProperty('--scene-bottom', '0%');
       scene.classList.toggle('is-active', isActive);
-      syncVideo(video, visible, isActive, impact);
+      syncVideo(video, isActive, impact);
     });
 
     chapters.forEach((chapter, index) => {
@@ -488,6 +704,7 @@
     requestUpdate();
   });
 
+  prepareTypography();
   measure();
   resizeCanvas();
   update();
