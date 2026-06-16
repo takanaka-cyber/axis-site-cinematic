@@ -72,6 +72,7 @@
     lastTime: -1,
     lastSeekAt: 0,
     playUntil: null,
+    visualProgress: 0,
     active: false,
     near: false,
   }));
@@ -521,8 +522,8 @@
       entry.playUntil = null;
     }
 
-    if (!force && activelyScrolling && drift > fpsStep * .75 && drift < .42 && video.readyState >= 2) {
-      const rate = clamp(.66 + drift * 4.2 + Math.abs(velocity) * .28, .66, 1.65);
+    if (!force && activelyScrolling && drift > fpsStep * .55 && drift < .68 && video.readyState >= 2) {
+      const rate = clamp(.74 + drift * 3.2 + Math.abs(velocity) * .22, .72, 1.42);
       entry.playUntil = quantized;
       if (Math.abs(video.playbackRate - rate) > .05) video.playbackRate = rate;
       if (video.paused) {
@@ -542,8 +543,8 @@
     video.playbackRate = 1;
     entry.playUntil = null;
 
-    const minSeekGap = force ? 0 : (activelyScrolling ? 54 : 34);
-    const tolerance = force ? fpsStep * .35 : (activelyScrolling ? fpsStep * 1.15 : fpsStep * .65);
+    const minSeekGap = force ? 0 : (activelyScrolling ? 72 : 42);
+    const tolerance = force ? fpsStep * .35 : (activelyScrolling ? fpsStep * 1.55 : fpsStep * .75);
     if (absDrift <= tolerance) return;
     if (!force && now - (entry.lastSeekAt || 0) < minSeekGap && absDrift < .28) return;
 
@@ -710,18 +711,19 @@
     const vh = window.innerHeight || 1;
     const maxScroll = Math.max(1, document.documentElement.scrollHeight - vh);
     const dt = Math.max(16, Math.min(64, now - lastTime));
-    const scrollEase = reduced ? 1 : clamp(1 - Math.pow(1 - .16, dt / 16.667), .08, .5);
+    const scrollEase = reduced ? 1 : clamp(1 - Math.pow(1 - .115, dt / 16.667), .055, .34);
+    const progressEase = reduced ? 1 : clamp(1 - Math.pow(1 - .2, dt / 16.667), .08, .42);
 
     if (reduced) {
       visualScrollY = targetScrollY;
     } else {
       const delta = targetScrollY - visualScrollY;
       visualScrollY += delta * scrollEase;
-      if (Math.abs(delta) < .12) visualScrollY = targetScrollY;
+      if (Math.abs(delta) < .18) visualScrollY = targetScrollY;
     }
 
     const scrollY = visualScrollY;
-    const rawVelocity = reduced ? 0 : clamp((scrollY - previousVisualScrollY) / dt, -1.8, 1.8);
+    const rawVelocity = reduced ? 0 : clamp((scrollY - previousVisualScrollY) / dt, -1.35, 1.35);
     const totalProgress = clamp(scrollY / maxScroll);
     const activeChapter = currentSceneIndex(scrollY, vh);
     const activeMetric = metrics[activeChapter] || metrics[0];
@@ -733,7 +735,7 @@
     const impact = Math.pow(wipe, .72);
     previousVisualScrollY = scrollY;
     lastTime = now;
-    fxState.velocity = lerp(fxState.velocity, rawVelocity, .42);
+    fxState.velocity = lerp(fxState.velocity, rawVelocity, .32);
     fxState.speed = clamp(Math.abs(fxState.velocity) / 2.1 + impact * .14);
     fxState.direction = fxState.velocity >= 0 ? 1 : -1;
     fxState.progress = totalProgress;
@@ -793,12 +795,23 @@
           entry.active = false;
           entry.near = false;
         }
+        entry.visualProgress = index < activeScene ? 1 : 0;
         settleVideo(entry, index < activeScene ? 1 : 0);
         return;
       }
 
       const mode = motionModes[index] || 'axis';
-      const camera = cameraMove(mode, isActive ? activeLocal : (index < activeScene ? 1 : 0), impact, fxState.velocity);
+      const targetLocal = isActive ? activeLocal : (index < activeScene ? 1 : 0);
+      if (isActive) {
+        if (!entry.active) entry.visualProgress = targetLocal;
+        else {
+          entry.visualProgress = lerp(entry.visualProgress, targetLocal, progressEase);
+          if (Math.abs(entry.visualProgress - targetLocal) < .002) entry.visualProgress = targetLocal;
+        }
+      } else {
+        entry.visualProgress = targetLocal;
+      }
+      const camera = cameraMove(mode, targetLocal, impact, fxState.velocity);
       const adjacentProgress = direction > 0 ? 0 : 1;
       const visible = isActive ? 1 : impact * .32;
       const drift = direction * (92 + distance * 18);
@@ -827,7 +840,7 @@
         entry.near = isNear;
       }
       if (isActive) {
-        scrubVideo(entry, activeLocal, { now, velocity: fxState.velocity, active: true });
+        scrubVideo(entry, entry.visualProgress, { now, velocity: fxState.velocity, active: true });
       } else {
         settleVideo(entry, adjacentProgress, true);
       }
