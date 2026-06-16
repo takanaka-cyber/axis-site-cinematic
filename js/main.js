@@ -3,6 +3,7 @@
 
   const root = document.documentElement;
   const scenes = Array.from(document.querySelectorAll('.scene'));
+  const bridges = Array.from(document.querySelectorAll('.bridge'));
   const chapters = Array.from(document.querySelectorAll('.chapter'));
   const navItems = Array.from(document.querySelectorAll('.nav a'));
   const progressBar = document.querySelector('.progress__bar');
@@ -26,11 +27,13 @@
     [106, 124, 255],
     [255, 61, 113],
     [255, 196, 0],
+    [255, 61, 113],
+    [0, 229, 194],
     [255, 255, 255],
   ];
 
-  const sceneHues = [176, 210, 234, 196, 248, 334, 45, 186];
-  const motionModes = ['axis', 'ink', 'signal', 'interface', 'portal', 'team', 'growth', 'contact'];
+  const sceneHues = [176, 248, 234, 196, 248, 334, 45, 286, 186, 210];
+  const motionModes = ['axis', 'ink', 'signal', 'interface', 'portal', 'team', 'growth', 'recruit', 'contact', 'foundation'];
 
   let metrics = [];
   let ticking = false;
@@ -65,8 +68,16 @@
   const sceneEntries = scenes.map((scene) => ({
     scene,
     video: scene.querySelector('video'),
+    duration: 5,
+    lastTime: -1,
     active: false,
     near: false,
+  }));
+
+  const bridgeEntries = bridges.map((bridge) => ({
+    bridge,
+    boundary: Number(bridge.dataset.boundary || 0),
+    visible: false,
   }));
 
   const chapterEntries = chapters.map((chapter) => ({
@@ -74,6 +85,58 @@
     copy: chapter.querySelector('.chapter__copy'),
     active: false,
   }));
+
+  let videoHydrationQueue = Promise.resolve();
+
+  sceneEntries.forEach((entry) => {
+    const { video } = entry;
+    if (!video) return;
+    video.muted = true;
+    video.playsInline = true;
+    video.pause();
+    entry.sourceReady = false;
+    const applyDuration = () => {
+      if (Number.isFinite(video.duration) && video.duration > .1) {
+        entry.duration = video.duration;
+      }
+    };
+    video.addEventListener('loadedmetadata', applyDuration, { once: false });
+    if (video.readyState >= 1) applyDuration();
+
+    if (reduced) {
+      entry.sourceReady = true;
+      return;
+    }
+
+    const sourcePath = video.dataset.src || video.currentSrc || video.src;
+    const originalSrc = new URL(sourcePath, window.location.href).href;
+    video.dataset.originalSrc = originalSrc;
+    entry.sourcePromise = videoHydrationQueue
+      .then(() => fetch(originalSrc))
+      .then((response) => {
+        if (!response.ok) throw new Error(`Video fetch failed: ${response.status}`);
+        return response.blob();
+      })
+      .then((blob) => new Promise((resolve) => {
+        const blobUrl = URL.createObjectURL(blob);
+        entry.blobUrl = blobUrl;
+        const ready = () => {
+          entry.sourceReady = true;
+          applyDuration();
+          resolve();
+          if (typeof requestUpdate === 'function') requestUpdate();
+        };
+        video.src = blobUrl;
+        video.load();
+        if (video.readyState >= 1) ready();
+        else video.addEventListener('loadedmetadata', ready, { once: true });
+      }))
+      .catch(() => {
+        entry.sourceReady = true;
+        video.dataset.sourceFallback = 'network';
+      });
+    videoHydrationQueue = entry.sourcePromise;
+  });
 
   const setStyle = (element, prop, value) => {
     if (!element) return;
@@ -99,128 +162,119 @@
     phase: i * 0.63,
   }));
 
-  const segmentText = (text, lang = 'ja') => {
-    if (window.Intl && typeof window.Intl.Segmenter === 'function') {
-      return Array.from(new Intl.Segmenter(lang, { granularity: 'grapheme' }).segment(text), (part) => part.segment);
-    }
-    return Array.from(text);
+  const pseudoRandom = (a, b, c = 0) => {
+    const x = Math.sin((a + 1) * 12.9898 + (b + 1) * 78.233 + (c + 1) * 37.719) * 43758.5453;
+    return x - Math.floor(x);
   };
 
-  const getGlyphMotion = (mode, charIndex, lineIndex, charCount) => {
-    const center = charCount > 1 ? (charIndex / (charCount - 1)) - .5 : 0;
-    const seed = (((charIndex + 3) * 17 + (lineIndex + 5) * 29) % 23) / 22;
-    const scatter = (seed - .5) * 2;
-    const baseDelay = lineIndex * 78 + charIndex * 18;
-    const motion = {
-      x: `${scatter * .24}em`,
-      y: '1.08em',
-      z: '0px',
-      rotateX: '58deg',
-      rotateY: '0deg',
-      rotateZ: `${scatter * 3}deg`,
-      scale: '.98',
-      blur: '5px',
-      delay: `${baseDelay}ms`,
-    };
+  const splitJapaneseTitle = (text) => {
+    const normalized = text.replace(/\s+/g, '');
+    const matches = normalized.match(/.{1,4}[、。,.!?]?/g);
+    return matches && matches.length ? matches : [normalized];
+  };
+
+  const splitEnglishTitle = (text) => text.split(/(\s+)/).filter(Boolean);
+
+  const getWordMotion = (mode, wordIndex, lineIndex) => {
+    const source = [
+      { x: '0%', y: '-150%', rotate: '-2deg', scale: '.04' },
+      { x: '12%', y: '75%', rotate: '2.5deg', scale: '.04' },
+      { x: '-14%', y: '-75%', rotate: '-4deg', scale: '.06' },
+      { x: '6%', y: '150%', rotate: '3deg', scale: '.04' },
+    ][(wordIndex + lineIndex) % 4];
+    const seed = pseudoRandom(wordIndex, lineIndex, mode.length);
+    const delay = Math.round(lineIndex * 90 + wordIndex * 34 + seed * 120);
+    const motion = { ...source, delay };
 
     if (mode === 'ink') {
       return {
         ...motion,
-        x: `${-.24 - Math.abs(scatter) * .2}em`,
-        y: `${scatter * .08}em`,
-        rotateX: '0deg',
-        rotateY: `${-18 - Math.abs(scatter) * 10}deg`,
-        rotateZ: `${scatter * -2}deg`,
-        scale: '.94',
-        blur: '8px',
-        delay: `${lineIndex * 120 + charIndex * 24}ms`,
+        x: `${-18 - seed * 18}%`,
+        y: `${seed > .5 ? 68 : -68}%`,
+        rotate: `${-4 + seed * 8}deg`,
+        scale: '.72',
       };
     }
 
     if (mode === 'signal') {
       return {
         ...motion,
-        x: `${scatter * .1}em`,
-        y: `${Math.abs(scatter) * .18}em`,
-        rotateX: '0deg',
-        rotateY: '0deg',
-        rotateZ: `${scatter * .8}deg`,
-        scale: '.99',
-        blur: '2px',
-        delay: `${lineIndex * 44 + charIndex * 9}ms`,
+        x: `${-42 + seed * 84}%`,
+        y: `${-26 + seed * 52}%`,
+        rotate: `${-1 + seed * 2}deg`,
+        scale: '.2',
+        delay: Math.round(lineIndex * 54 + wordIndex * 18 + seed * 70),
       };
     }
 
     if (mode === 'interface') {
       return {
         ...motion,
-        x: `${center * -1.2}em`,
-        y: '0',
-        z: '-44px',
-        rotateX: '0deg',
-        rotateY: `${center * 42}deg`,
-        rotateZ: '0deg',
-        scale: '.92',
-        blur: '3px',
-        delay: `${lineIndex * 62 + Math.abs(center) * 170}ms`,
+        x: `${(wordIndex % 2 ? 1 : -1) * (38 + seed * 24)}%`,
+        y: `${-12 + seed * 24}%`,
+        rotate: '0deg',
+        scale: '.84',
       };
     }
 
     if (mode === 'portal') {
       return {
         ...motion,
-        x: `${center * 1.7}em`,
-        y: `${scatter * .26}em`,
-        z: '-80px',
-        rotateX: `${scatter * 18}deg`,
-        rotateY: `${center * -70}deg`,
-        rotateZ: `${center * 18}deg`,
-        scale: '.72',
-        blur: '7px',
-        delay: `${lineIndex * 58 + Math.abs(center) * 210}ms`,
+        x: `${-70 + seed * 140}%`,
+        y: `${-120 + seed * 240}%`,
+        rotate: `${-12 + seed * 24}deg`,
+        scale: '.28',
       };
     }
 
     if (mode === 'team') {
       return {
         ...motion,
-        x: `${-.55 + charIndex * .01}em`,
-        y: '.22em',
-        rotateX: '0deg',
-        rotateY: '-20deg',
-        rotateZ: `${scatter * 1.2}deg`,
-        scale: '.97',
-        blur: '4px',
-        delay: `${lineIndex * 88 + charIndex * 14}ms`,
+        x: `${wordIndex % 2 ? 46 : -46}%`,
+        y: `${lineIndex % 2 ? 38 : -38}%`,
+        rotate: `${wordIndex % 2 ? 4 : -4}deg`,
+        scale: '.64',
       };
     }
 
     if (mode === 'growth') {
       return {
         ...motion,
-        x: `${scatter * .12}em`,
-        y: '1.36em',
-        rotateX: '42deg',
-        rotateY: `${scatter * 10}deg`,
-        rotateZ: '0deg',
-        scale: '.9',
-        blur: '6px',
-        delay: `${lineIndex * 70 + charIndex * 16}ms`,
+        x: `${-8 + seed * 16}%`,
+        y: `${130 + seed * 70}%`,
+        rotate: `${-3 + seed * 6}deg`,
+        scale: '.52',
       };
     }
 
     if (mode === 'contact') {
       return {
         ...motion,
-        x: `${center * -1.45}em`,
-        y: `${scatter * .18}em`,
-        z: '-24px',
-        rotateX: '0deg',
-        rotateY: `${center * 56}deg`,
-        rotateZ: `${scatter * 3.4}deg`,
-        scale: '.86',
-        blur: '5px',
-        delay: `${lineIndex * 70 + charIndex * 13}ms`,
+        x: `${wordIndex % 2 ? 74 : -74}%`,
+        y: `${-20 + seed * 40}%`,
+        rotate: `${wordIndex % 2 ? -8 : 8}deg`,
+        scale: '.36',
+      };
+    }
+
+    if (mode === 'recruit') {
+      return {
+        ...motion,
+        x: `${wordIndex % 2 ? 86 : -86}%`,
+        y: `${-60 + seed * 120}%`,
+        rotate: `${wordIndex % 2 ? -10 : 10}deg`,
+        scale: '.32',
+      };
+    }
+
+    if (mode === 'foundation') {
+      return {
+        ...motion,
+        x: `${-10 + seed * 20}%`,
+        y: `${-18 + seed * 36}%`,
+        rotate: '0deg',
+        scale: '.82',
+        delay: Math.round(lineIndex * 70 + wordIndex * 28 + seed * 90),
       };
     }
 
@@ -231,9 +285,11 @@
     if (!title || title.dataset.typoReady === 'true') return;
     const lines = Array.from(title.children);
     const label = lines.map((line) => (line.textContent || '').trim()).filter(Boolean).join(' ');
-    const useLineText = title.classList.contains('chapter__title--jp');
+    const isJapanese = title.classList.contains('chapter__title--jp');
 
     if (label) title.setAttribute('aria-label', label);
+    title.setAttribute('data-scroll-reveal', 'h');
+    title.setAttribute('data-prevent-flicker', 'true');
 
     lines.forEach((line, lineIndex) => {
       const text = line.textContent || '';
@@ -242,32 +298,24 @@
       line.setAttribute('aria-hidden', 'true');
       line.style.setProperty('--line-index', lineIndex);
 
-      if (useLineText) {
-        const inner = document.createElement('span');
-        inner.className = 'typo-line-text';
-        inner.textContent = text;
-        line.appendChild(inner);
-        return;
-      }
+      const words = isJapanese ? splitJapaneseTitle(text) : splitEnglishTitle(text);
+      words.forEach((word, wordIndex) => {
+        const isSpace = /^\s+$/.test(word);
+        const span = document.createElement('span');
+        span.className = isSpace ? 'split-space' : 'split-word';
+        span.textContent = isSpace ? '\u00a0' : word;
 
-      const chars = segmentText(text);
-      chars.forEach((char, charIndex) => {
-        const motion = getGlyphMotion(mode, charIndex, lineIndex, chars.length);
-        const glyph = document.createElement('span');
-        glyph.className = char.trim() ? 'typo-char' : 'typo-char typo-char--space';
-        glyph.textContent = char === ' ' ? '\u00a0' : char;
-        glyph.dataset.glyph = char.trim() ? char : '';
-        glyph.style.setProperty('--char-index', charIndex);
-        glyph.style.setProperty('--char-x', motion.x);
-        glyph.style.setProperty('--char-y', motion.y);
-        glyph.style.setProperty('--char-z', motion.z);
-        glyph.style.setProperty('--char-rotate-x', motion.rotateX);
-        glyph.style.setProperty('--char-rotate-y', motion.rotateY);
-        glyph.style.setProperty('--char-rotate-z', motion.rotateZ);
-        glyph.style.setProperty('--char-scale', motion.scale);
-        glyph.style.setProperty('--char-blur', motion.blur);
-        glyph.style.setProperty('--char-delay', motion.delay);
-        line.appendChild(glyph);
+        if (!isSpace) {
+          const motion = getWordMotion(mode, wordIndex, lineIndex);
+          span.style.setProperty('--word-index', wordIndex);
+          span.style.setProperty('--word-x', motion.x);
+          span.style.setProperty('--word-y', motion.y);
+          span.style.setProperty('--word-rotate', motion.rotate);
+          span.style.setProperty('--word-scale', motion.scale);
+          span.style.setProperty('--word-delay', `${motion.delay}ms`);
+        }
+
+        line.appendChild(span);
       });
     });
 
@@ -289,17 +337,65 @@
     element.dataset.typoReady = 'true';
   };
 
+  const splitCopyLines = (text) => {
+    const clean = text.replace(/\s+/g, ' ').trim();
+    if (!clean) return [];
+    const sentences = clean.match(/[^。.!?]+[。.!?]?/g) || [clean];
+    const lines = [];
+    let buffer = '';
+
+    sentences.forEach((sentence) => {
+      const next = `${buffer}${sentence}`.trim();
+      if (buffer && next.length > 36) {
+        lines.push(buffer.trim());
+        buffer = sentence;
+      } else {
+        buffer = next;
+      }
+    });
+
+    if (buffer.trim()) lines.push(buffer.trim());
+
+    return lines.flatMap((line) => {
+      if (line.length <= 48) return [line];
+      const parts = line.split(/(?<=、|,)/).filter(Boolean);
+      if (parts.length <= 1) return [line];
+      const compact = [];
+      let current = '';
+      parts.forEach((part) => {
+        const next = `${current}${part}`.trim();
+        if (current && next.length > 34) {
+          compact.push(current.trim());
+          current = part;
+        } else {
+          current = next;
+        }
+      });
+      if (current.trim()) compact.push(current.trim());
+      return compact;
+    });
+  };
+
   const maskTextBlock = (element, delay = 0) => {
     if (!element || element.dataset.typoReady === 'true') return;
     const text = element.textContent || '';
     element.textContent = '';
-    element.classList.add('typo-mask');
-    element.style.setProperty('--text-delay', `${delay}ms`);
+    element.classList.add('typo-mask', 'split-lines');
+    element.setAttribute('data-scroll-reveal', 'p');
+    element.setAttribute('data-prevent-flicker', 'true');
 
-    const inner = document.createElement('span');
-    inner.className = 'typo-mask__inner';
-    inner.textContent = text;
-    element.appendChild(inner);
+    splitCopyLines(text).forEach((line, index) => {
+      const outer = document.createElement('span');
+      const inner = document.createElement('span');
+      outer.className = 'split-line';
+      inner.className = 'split-line__inner';
+      inner.textContent = line;
+      outer.style.setProperty('--line-delay', `${delay + index * 96}ms`);
+      outer.style.setProperty('--line-x', index % 2 ? '26px' : '-18px');
+      outer.appendChild(inner);
+      element.appendChild(outer);
+    });
+
     element.dataset.typoReady = 'true';
   };
 
@@ -308,6 +404,7 @@
       const sceneIndex = Number(chapter.dataset.scene || 0);
       const mode = motionModes[sceneIndex] || 'axis';
       chapter.dataset.typoMode = mode;
+      chapter.querySelector('.chapter__copy')?.setAttribute('data-prevent-flicker', 'true');
       splitTokens(chapter.querySelector('.chapter__eyebrow'));
       splitTitle(chapter.querySelector('.chapter__title'), mode);
       maskTextBlock(chapter.querySelector('.chapter__lead'), 120);
@@ -319,6 +416,8 @@
       const button = chapter.querySelector('.chapter__button');
       if (button) {
         button.classList.add('typo-button');
+        button.setAttribute('data-scroll-reveal', 'ctn');
+        button.setAttribute('data-prevent-flicker', 'true');
       }
     });
   };
@@ -372,38 +471,176 @@
     return smooth(pulse);
   };
 
-  const applyKineticVars = () => {
-    setRoot('--speed', fxState.speed.toFixed(3));
-    setRoot('--velocity', fxState.velocity.toFixed(3));
-    setRoot('--cut', fxState.cut.toFixed(3));
-    setRoot('--burst', fxState.burst.toFixed(3));
-    setRoot('--direction', String(fxState.direction));
-    setRoot('--section-local', fxState.local.toFixed(3));
+  const applySceneVars = () => {
     setRoot('--scene-hue', String(fxState.hue));
     if (root.dataset.motion !== fxState.motion) root.dataset.motion = fxState.motion;
   };
 
-  const syncVideo = (video, isActive, impact) => {
+  const scrubVideo = (entry, progress) => {
+    const { video } = entry;
     if (!video) return;
     if (reduced) {
       if (!video.paused) video.pause();
       return;
     }
+    entry.pendingProgress = clamp(progress);
+    if (!entry.sourceReady) return;
 
-    if (isActive) {
-      const nextRate = lerp(.82, 1.22, impact);
-      if (Math.abs(video.playbackRate - nextRate) > .035) {
-        video.playbackRate = nextRate;
+    if (!video.paused) video.pause();
+    if (video.readyState < 1) {
+      if (video.dataset.playState !== 'loading') {
+        video.dataset.playState = 'loading';
+        video.load();
       }
-      if (video.dataset.playState !== 'active' || video.paused) {
-        video.dataset.playState = 'active';
-        const play = video.play();
-        if (play && typeof play.catch === 'function') play.catch(() => {});
-      }
-    } else if (video.dataset.playState !== 'paused') {
-      video.dataset.playState = 'paused';
-      video.pause();
+      return;
     }
+
+    const duration = Math.max(.1, entry.duration || video.duration || 5);
+    const fpsStep = 1 / 24;
+    const target = clamp(progress) * Math.max(.1, duration - .05);
+    const quantized = Math.round(target / fpsStep) * fpsStep;
+
+    if (Math.abs(video.currentTime - quantized) > fpsStep * .65) {
+      try {
+        entry.targetTime = quantized;
+        video.currentTime = quantized;
+        video.dataset.targetTime = quantized.toFixed(3);
+        entry.lastTime = quantized;
+        video.dataset.playState = 'scrub';
+      } catch (error) {
+        video.dataset.playState = 'blocked';
+      }
+    }
+  };
+
+  const settleVideo = (entry, progress, force = false) => {
+    const { video } = entry;
+    if (!video) return;
+    if (!video.paused) video.pause();
+    if (force || video.dataset.playState !== 'paused') {
+      scrubVideo(entry, progress);
+      video.dataset.playState = 'paused';
+    }
+  };
+
+  const cameraMove = (mode, local, impact, velocity) => {
+    const p = smooth(clamp(local));
+    const v = clamp(velocity, -1, 1);
+    const base = { x: 0, y: 0, scale: 1.06, rotate: 0, dim: .28, scan: .12, roll: 0 };
+
+    if (mode === 'axis') {
+      return { x: lerp(64, -42, p) - v * 20, y: lerp(48, -34, p), scale: lerp(1.28, 1.01, p) + impact * .025, rotate: lerp(-1.1, .55, p), dim: lerp(.38, .22, p), scan: .12 + impact * .2, roll: lerp(-.16, .1, p) };
+    }
+    if (mode === 'ink') {
+      return { x: lerp(96, -76, p), y: lerp(-38, 52, p), scale: lerp(1.32, 1.03, p), rotate: lerp(-1.8, 1.0, p), dim: lerp(.34, .24, p), scan: .08 + impact * .16, roll: lerp(.12, -.16, p) };
+    }
+    if (mode === 'signal') {
+      return { x: lerp(170, -190, p) - v * 34, y: lerp(24, -26, p), scale: lerp(1.24, 1.06, p), rotate: lerp(.65, -.65, p), dim: .24, scan: .2 + impact * .24, roll: lerp(.08, -.08, p) };
+    }
+    if (mode === 'interface') {
+      return { x: lerp(28, -24, p), y: lerp(96, -58, p), scale: lerp(1.38, 1.01, p), rotate: lerp(.3, -.22, p), dim: .24, scan: .18 + impact * .2, roll: lerp(.04, -.04, p) };
+    }
+    if (mode === 'portal') {
+      const orbit = Math.sin(p * Math.PI * 1.3);
+      return { x: lerp(112, -72, p) + orbit * 48, y: lerp(26, -34, p) - Math.cos(p * Math.PI) * 32, scale: lerp(1.32, 1.03, p), rotate: lerp(-1.7, 1.7, p), dim: .24, scan: .12 + impact * .24, roll: lerp(-.18, .18, p) };
+    }
+    if (mode === 'team') {
+      return { x: lerp(-74, 68, p), y: lerp(-96, 42, p), scale: lerp(1.24, 1.04, p), rotate: lerp(1.0, -1.0, p), dim: .3, scan: .1 + impact * .18, roll: lerp(.14, -.14, p) };
+    }
+    if (mode === 'growth') {
+      return { x: lerp(22, -18, p), y: lerp(150, -174, p), scale: lerp(1.26, 1.01, p), rotate: lerp(.35, -.28, p), dim: .26, scan: .12 + impact * .22, roll: lerp(.06, -.08, p) };
+    }
+    if (mode === 'recruit') {
+      return { x: lerp(-126, 106, p), y: lerp(54, -42, p), scale: lerp(1.24, 1.04, p), rotate: lerp(-1.35, 1.35, p), dim: .28, scan: .12 + impact * .18, roll: lerp(-.14, .16, p) };
+    }
+    if (mode === 'contact') {
+      return { x: lerp(58, -44, p), y: lerp(82, -52, p), scale: lerp(1.34, 1.0, p), rotate: lerp(-.45, .35, p), dim: lerp(.32, .22, p), scan: .16 + impact * .2, roll: lerp(-.06, .08, p) };
+    }
+    if (mode === 'foundation') {
+      return { x: lerp(22, -12, p), y: lerp(26, -12, p), scale: lerp(1.14, 1.0, p), rotate: 0, dim: .3, scan: .08 + impact * .08, roll: 0 };
+    }
+
+    return base;
+  };
+
+  const copyMove = (mode, local) => {
+    const p = smooth(clamp(local));
+    const easeOut = 1 - Math.pow(1 - clamp(local), 3);
+    if (mode === 'axis') return { x: lerp(-18, 28, p), y: lerp(18, -22, p), scale: lerp(1.012, .988, p), rotate: lerp(-.15, .08, p) };
+    if (mode === 'ink') return { x: lerp(56, -18, p), y: lerp(-10, 16, p), scale: lerp(.985, 1.012, p), rotate: lerp(.18, -.12, p) };
+    if (mode === 'signal') return { x: lerp(-72, 52, p), y: lerp(-12, 8, p), scale: 1, rotate: lerp(-.2, .16, p) };
+    if (mode === 'interface') return { x: 0, y: lerp(34, -38, p), scale: lerp(.97, 1.015, p), rotate: 0 };
+    if (mode === 'portal') return { x: Math.sin(easeOut * Math.PI) * 36, y: lerp(20, -18, p), scale: lerp(1.012, .99, p), rotate: lerp(.3, -.22, p) };
+    if (mode === 'team') return { x: lerp(-28, 28, p), y: lerp(-26, 24, p), scale: 1, rotate: lerp(-.16, .16, p) };
+    if (mode === 'growth') return { x: 0, y: lerp(52, -58, p), scale: lerp(.985, 1.006, p), rotate: 0 };
+    if (mode === 'recruit') return { x: lerp(42, -44, p), y: lerp(30, -20, p), scale: lerp(.99, 1.01, p), rotate: lerp(.18, -.18, p) };
+    if (mode === 'contact') return { x: lerp(-38, 34, p), y: lerp(34, -28, p), scale: lerp(.98, 1.012, p), rotate: lerp(-.18, .14, p) };
+    if (mode === 'foundation') return { x: lerp(0, 10, p), y: lerp(10, -10, p), scale: 1, rotate: 0 };
+    return { x: 0, y: 0, scale: 1, rotate: 0 };
+  };
+
+  const updateBridges = (scrollY, vh) => {
+    if (!bridgeEntries.length) return;
+    const probe = scrollY + vh * .5;
+    bridgeEntries.forEach((entry) => {
+      const metric = metrics[entry.boundary];
+      const { bridge } = entry;
+      if (!metric || !bridge) return;
+      const range = vh * (entry.boundary === 4 ? 1.08 : entry.boundary === 6 ? 1 : .92);
+      const raw = 1 - Math.abs(probe - metric.top) / range;
+      const pulse = smooth(clamp(raw));
+      const after = clamp((probe - (metric.top - range)) / (range * 2));
+      const visible = pulse > .015;
+
+      if (entry.visible !== visible) {
+        bridge.classList.toggle('is-visible', visible);
+        entry.visible = visible;
+      }
+
+      if (!visible) {
+        setStyle(bridge, '--bridge-opacity', '0');
+        return;
+      }
+
+      const orbit = Math.sin(after * Math.PI);
+      let x = lerp(64, -44, after);
+      let y = lerp(22, -28, after);
+      let scale = lerp(1.28, .98, after) + pulse * .05;
+      let rotate = lerp(-1.2, .8, after);
+      let opacity = pulse * .78;
+
+      if (entry.boundary === 1) {
+        x = lerp(36, -16, after);
+        y = lerp(14, -18, after);
+        scale = lerp(1.46, .96, after) + pulse * .08;
+        rotate = lerp(-.8, .28, after);
+        opacity = pulse * .9;
+      } else if (entry.boundary === 4) {
+        x = lerp(108, -88, after) + orbit * 32;
+        y = lerp(46, -48, after) - orbit * 22;
+        scale = lerp(1.34, .98, after) + pulse * .06;
+        rotate = lerp(-4.2, 4.6, after);
+        opacity = pulse * .82;
+      } else if (entry.boundary === 6) {
+        x = lerp(-20, 24, after);
+        y = lerp(132, -146, after);
+        scale = lerp(1.3, .95, after) + pulse * .04;
+        rotate = lerp(.4, -.35, after);
+        opacity = pulse * .78;
+      } else if (entry.boundary === 8) {
+        x = lerp(-82, 58, after);
+        y = lerp(54, -38, after);
+        scale = lerp(1.4, .94, after) + pulse * .08;
+        rotate = lerp(2.8, -1.4, after);
+        opacity = pulse * .88;
+      }
+
+      setStyle(bridge, '--bridge-opacity', opacity.toFixed(3));
+      setStyle(bridge, '--bridge-x', `${x.toFixed(2)}px`);
+      setStyle(bridge, '--bridge-y', `${y.toFixed(2)}px`);
+      setStyle(bridge, '--bridge-scale', scale.toFixed(4));
+      setStyle(bridge, '--bridge-rotate', `${rotate.toFixed(3)}deg`);
+    });
   };
 
   const requestFx = () => {
@@ -435,7 +672,9 @@
     const activeChapter = currentSceneIndex(scrollY, vh);
     const activeMetric = metrics[activeChapter] || metrics[0];
     const activeScene = activeMetric ? activeMetric.scene : 0;
-    const activeLocal = activeMetric ? clamp((scrollY - activeMetric.top) / Math.max(1, activeMetric.height - vh)) : 0;
+    const sceneChanged = activeScene !== fxState.active;
+    const activeProbe = scrollY + vh * .5;
+    const activeLocal = activeMetric ? clamp((activeProbe - activeMetric.top) / Math.max(1, activeMetric.height)) : 0;
     const wipe = reduced ? 0 : transitionPulse(scrollY, vh);
     const impact = Math.pow(wipe, .72);
     previousVisualScrollY = scrollY;
@@ -443,10 +682,6 @@
     fxState.velocity = lerp(fxState.velocity, rawVelocity, .42);
     fxState.speed = clamp(Math.abs(fxState.velocity) / 2.1 + impact * .14);
     fxState.direction = fxState.velocity >= 0 ? 1 : -1;
-    if (activeScene !== fxState.active) {
-      fxState.burst = 1;
-    }
-
     fxState.progress = totalProgress;
     fxState.impact = impact;
     fxState.active = activeScene;
@@ -455,42 +690,72 @@
     fxState.hue = sceneHues[activeScene] || sceneHues[0];
     fxState.motion = motionModes[activeScene] || motionModes[0];
     fxState.cut = clamp(Math.max(impact * .92, fxState.burst * .62));
-    applyKineticVars();
+    if (window.location.search.includes('debug')) {
+      window.__axisCameraState = {
+        scrollY,
+        targetScrollY,
+        activeChapter,
+        activeScene,
+        activeLocal,
+      };
+    }
+    applySceneVars();
+    const activeCamera = cameraMove(fxState.motion, activeLocal, impact, fxState.velocity);
+    setRoot('--camera-x', `${activeCamera.x.toFixed(2)}px`);
+    setRoot('--camera-y', `${activeCamera.y.toFixed(2)}px`);
+    setRoot('--camera-z', activeCamera.scale.toFixed(4));
+    setRoot('--camera-roll', `${(activeCamera.roll || 0).toFixed(3)}deg`);
+    setRoot('--camera-progress', activeLocal.toFixed(4));
+
+    if (sceneChanged) {
+      fxState.burst = 1;
+    }
 
     if (progressBar) {
       setStyle(progressBar, 'transform', `scaleX(${totalProgress.toFixed(4)})`);
     }
 
-    setRoot('--wipe', wipe.toFixed(3));
-    setRoot('--wipe-gap', `${((1 - wipe) * 50).toFixed(2)}%`);
-    setRoot('--wipe-pct', `${(wipe * 100).toFixed(2)}%`);
-    setRoot('--wipe-signal', `${(wipe * 38).toFixed(2)}%`);
-    setRoot('--wipe-interface-x', `${(wipe * 48).toFixed(2)}%`);
-    setRoot('--wipe-interface-y', `${(wipe * 20).toFixed(2)}%`);
-    setRoot('--wipe-team', `${(wipe * 55).toFixed(2)}%`);
-    setRoot('--impact', impact.toFixed(3));
-    setRoot('--stage-x', `${lerp(0, -220, totalProgress).toFixed(2)}px`);
-    setRoot('--stage-y', `${lerp(0, 140, totalProgress).toFixed(2)}px`);
-    setRoot('--stage-scale', (1 + totalProgress * 0.12 + impact * .04 + fxState.burst * .025).toFixed(4));
-    setRoot('--axis-scale', (0.64 + impact * 1.16).toFixed(3));
+    updateBridges(scrollY, vh);
 
     sceneEntries.forEach((entry, index) => {
       const { scene, video } = entry;
       const distance = Math.abs(index - activeScene);
       const isActive = index === activeScene;
-      const isAdjacent = distance === 1;
+      const towardScene = activeScene + (fxState.direction >= 0 ? 1 : -1);
+      const isAdjacent = index === towardScene && distance === 1 && impact > .08;
       const direction = index < activeScene ? -1 : 1;
-      const visible = isActive ? 1 : (isAdjacent ? impact * .34 + fxState.speed * .08 : 0);
-      const drift = direction * (210 + distance * 64);
-      const velocityPush = fxState.velocity * (isActive ? -28 : 72);
-      const burstPush = fxState.burst * direction * 48;
-      const depth = isActive ? 1.06 + activeLocal * .14 + impact * .075 + fxState.speed * .035 + fxState.burst * .03 : 1.2 + distance * .07 + fxState.burst * .06;
-      const y = isActive ? lerp(48, -86, activeLocal) - impact * 38 + fxState.velocity * 10 - fxState.burst * 18 : drift + burstPush * .35;
-      const x = isActive ? lerp(34, -66, activeLocal) + impact * 26 + velocityPush : drift * -.76 + velocityPush + burstPush;
-      const rotate = isActive ? lerp(.4, -1.35, activeLocal) + impact * 1.8 + fxState.velocity * .55 + fxState.burst * .8 : direction * (3.1 + fxState.burst * 2);
-      const dim = isActive ? clamp(.34 - activeLocal * .1 - impact * .08 - fxState.speed * .04, .16, .36) : .62;
-      const scan = isActive ? .16 + impact * .5 + fxState.speed * .22 + fxState.burst * .34 : .08;
       const isNear = isActive || isAdjacent;
+
+      if (!isNear) {
+        if (entry.near || entry.active) {
+          setStyle(scene, 'opacity', '0');
+          setStyle(scene, '--scene-x', '0px');
+          setStyle(scene, '--scene-y', '0px');
+          setStyle(scene, '--scene-scale', '1.08');
+          setStyle(scene, '--scene-rotate', '0deg');
+          setStyle(scene, '--scene-dim', '.62');
+          setStyle(scene, '--scene-scan', '.08');
+          scene.classList.remove('is-active', 'is-near');
+          entry.active = false;
+          entry.near = false;
+        }
+        settleVideo(entry, index < activeScene ? 1 : 0);
+        return;
+      }
+
+      const mode = motionModes[index] || 'axis';
+      const camera = cameraMove(mode, isActive ? activeLocal : (index < activeScene ? 1 : 0), impact, fxState.velocity);
+      const adjacentProgress = direction > 0 ? 0 : 1;
+      const visible = isActive ? 1 : impact * .38;
+      const drift = direction * (180 + distance * 44);
+      const velocityPush = fxState.velocity * (isActive ? -18 : 58);
+      const burstPush = fxState.burst * direction * 28;
+      const depth = isActive ? camera.scale : 1.18 + distance * .035 + impact * .03;
+      const y = isActive ? camera.y : drift * .22 + burstPush * .2;
+      const x = isActive ? camera.x + velocityPush * .18 : drift * -.54 + velocityPush * .22 + burstPush * .36;
+      const rotate = isActive ? camera.rotate + impact * .2 : direction * 1.2;
+      const dim = isActive ? camera.dim : .6;
+      const scan = isActive ? camera.scan : .06;
 
       setStyle(scene, 'opacity', visible.toFixed(3));
       setStyle(scene, '--scene-x', `${x.toFixed(2)}px`);
@@ -507,20 +772,20 @@
         scene.classList.toggle('is-near', isNear);
         entry.near = isNear;
       }
-      syncVideo(video, isActive, impact);
+      if (isActive) {
+        scrubVideo(entry, activeLocal);
+      } else {
+        settleVideo(entry, adjacentProgress, true);
+      }
     });
 
     chapterEntries.forEach((entry, index) => {
       const { chapter, copy } = entry;
       const metric = metrics[index];
       const local = index === 0 ? 1 : (metric ? clamp((scrollY - (metric.top - vh * 0.5)) / (vh * 0.82)) : 0);
-      const leaving = metric ? clamp((scrollY - (metric.top + metric.height - vh * 1.06)) / (vh * 0.58)) : 0;
-      const localSmooth = smooth(local);
-      const leavingSmooth = smooth(leaving);
       const isCurrentChapter = index === activeChapter;
-      const opacity = isCurrentChapter ? 1 : 0;
-      const copyLocal = isCurrentChapter ? Math.max(localSmooth, .64) : localSmooth;
-      const y = lerp(40, -12, copyLocal);
+      const sceneIndex = Number(chapter.dataset.scene || 0);
+      const sectionLocal = metric ? clamp((scrollY + vh * .5 - metric.top) / Math.max(1, metric.height)) : 0;
       const revealLead = metric ? scrollY + vh * .95 >= metric.top : false;
       const shouldReveal = index === 0 || revealLead || local > .08 || isCurrentChapter;
 
@@ -529,14 +794,18 @@
         chapter.classList.add('is-revealed');
       }
 
-      setStyle(chapter, '--line-scale', (localSmooth * (1 - leavingSmooth * .74)).toFixed(3));
       if (copy) {
-        setStyle(copy, '--copy-opacity', opacity.toFixed(3));
-        setStyle(copy, '--copy-y', `${y.toFixed(2)}px`);
-        setStyle(copy, '--copy-scale', lerp(.985, 1, copyLocal).toFixed(4));
+        const mode = motionModes[sceneIndex] || 'axis';
+        const move = copyMove(mode, isCurrentChapter ? sectionLocal : (index < activeChapter ? 1 : 0));
+        setStyle(copy, '--copy-track-x', `${move.x.toFixed(2)}px`);
+        setStyle(copy, '--copy-track-y', `${move.y.toFixed(2)}px`);
+        setStyle(copy, '--copy-track-scale', move.scale.toFixed(4));
+        setStyle(copy, '--copy-track-rotate', `${move.rotate.toFixed(3)}deg`);
       }
+
       if (entry.active !== isCurrentChapter) {
         chapter.classList.toggle('is-active', isCurrentChapter);
+        setStyle(chapter, '--line-scale', isCurrentChapter ? '1' : '.16');
         entry.active = isCurrentChapter;
       }
     });
@@ -583,6 +852,7 @@
     const fxElapsed = Math.max(16, time - lastFxDraw);
     const decayStep = clamp(fxElapsed / 42, .5, 6);
     lastFxDraw = time;
+
     window.__axisFxFrames = (window.__axisFxFrames || 0) + 1;
     ctx.clearRect(0, 0, canvasW, canvasH);
     ctx.globalCompositeOperation = 'lighter';
@@ -673,6 +943,26 @@
       ctx.moveTo(-canvasW * .42, 0);
       ctx.lineTo(canvasW * .46, 0);
       ctx.stroke();
+    } else if (mode === 'recruit') {
+      ctx.translate(canvasW * .5, canvasH * .5);
+      ctx.strokeStyle = `rgba(255, 61, 113, ${.1 + cut * .3})`;
+      ctx.lineWidth = 1 + cut * 3.2;
+      for (let i = -5; i <= 5; i += 1) {
+        ctx.beginPath();
+        ctx.moveTo(-canvasW * .54, i * canvasH * .08 + Math.sin(t + i) * 16);
+        ctx.lineTo(canvasW * .54, -i * canvasH * .06 + velocity * 30);
+        ctx.stroke();
+      }
+    } else if (mode === 'foundation') {
+      ctx.translate(canvasW * .5, canvasH * .5);
+      ctx.strokeStyle = `rgba(255, 255, 255, ${.08 + cut * .18})`;
+      ctx.lineWidth = 1 + cut * 2;
+      for (let i = -3; i <= 3; i += 1) {
+        ctx.beginPath();
+        ctx.moveTo(i * canvasW * .09, -canvasH * .44);
+        ctx.lineTo(i * canvasW * .09 + velocity * 8, canvasH * .44);
+        ctx.stroke();
+      }
     } else if (mode === 'ink') {
       ctx.globalCompositeOperation = 'source-over';
       ctx.fillStyle = `rgba(245, 247, 250, ${.06 + cut * .12})`;
@@ -817,6 +1107,21 @@
         ctx.moveTo(canvasW * .2, canvasH * .2);
         ctx.lineTo(canvasW * .92, canvasH * .78);
         ctx.stroke();
+      } else if (mode === 'recruit') {
+        ctx.strokeStyle = `rgba(255, 61, 113, ${.14 + cut * .28})`;
+        for (let i = 0; i < 8; i += 1) {
+          const y = canvasH * (.18 + i * .08);
+          ctx.beginPath();
+          ctx.moveTo(canvasW * .1, y + Math.sin(t + i) * 18);
+          ctx.lineTo(canvasW * .9, canvasH - y + Math.cos(t + i) * 18);
+          ctx.stroke();
+        }
+      } else if (mode === 'foundation') {
+        ctx.strokeStyle = `rgba(255, 255, 255, ${.1 + cut * .2})`;
+        ctx.beginPath();
+        ctx.moveTo(canvasW * .18, canvasH * .62);
+        ctx.lineTo(canvasW * .82, canvasH * .62 - cut * canvasH * .08);
+        ctx.stroke();
       }
 
       ctx.restore();
@@ -852,11 +1157,10 @@
     fxState.velocity = lerp(fxState.velocity, 0, clamp(.12 * decayStep));
     fxState.speed = lerp(fxState.speed, 0, clamp(.14 * decayStep));
     fxState.burst = lerp(fxState.burst, 0, clamp(.28 * decayStep));
+    fxState.impact = lerp(fxState.impact, 0, clamp(.18 * decayStep));
     fxState.cut = clamp(Math.max(fxState.impact * .92, fxState.burst * .62));
-    applyKineticVars();
     const keepFxAlive = fxState.speed > .012 || Math.abs(fxState.velocity) > .012 || fxState.burst > .012 || fxState.cut > .012 || fxState.impact > .012;
     if (keepFxAlive) {
-      requestUpdate();
       requestAnimationFrame(renderFx);
     } else {
       fxRunning = false;

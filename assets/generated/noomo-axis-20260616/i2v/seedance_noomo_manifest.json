@@ -1,0 +1,196 @@
+{
+  "project": "AXIS Noomo-style cinematic website prototype",
+  "createdAt": "2026-06-16T13:41:52",
+  "destination": "fal.ai / Seedance image-to-video",
+  "model": "bytedance/seedance-2.0/image-to-video",
+  "duration": "5",
+  "resolution": "720p",
+  "aspectRatio": "16:9",
+  "scope": "AXIS Noomo-style i2v only. No Drive upload, no external sharing.",
+  "items": [
+    {
+      "order": 1,
+      "clipId": "axis-noomo-scene-01-push-in",
+      "sourceImage": "/Users/takanakashuusuke/Desktop/AI_Automation/axis_site_cinematic/assets/generated/noomo-axis-20260616/axis-noomo-scene-01.png",
+      "video": "/Users/takanakashuusuke/Desktop/AI_Automation/axis_site_cinematic/assets/generated/noomo-axis-20260616/i2v/axis-noomo-scene-01-push-in.mp4",
+      "prompt": "Slow cinematic camera push-in toward the suspended luminous crystal axis. Foreground rocks and glass monoliths drift past the lens with subtle parallax, tiny particles float in the dark void, the crystal energy pulses gently. Keep the human silhouette small and stable, keep the composition premium and monumental. No text overlay, no subtitles, no logo, no UI captions, no extra words, no readable letters, no distorted typography, no cartoon style, no anime style, no flat illustration, no melted geometry, no sudden object replacement. Preserve the original scene composition, premium dark AXIS mood, and crystalline axis motif.",
+      "model": "bytedance/seedance-2.0/image-to-video",
+      "duration": "5",
+      "resolution": "720p",
+      "aspectRatio": "16:9",
+      "status": "ok",
+      "startedAt": "2026-06-16T13:41:52",
+      "completedAt": "2026-06-16T13:45:07",
+      "elapsedSeconds": 195.2,
+      "falVideoUrl": "https://v3b.fal.media/files/b/0a9e7bae/WBjrO27Iyp7yi6_K93Q5p_video.mp4",
+      "result": {
+        "video": {
+          "url": "https://v3b.fal.media/files/b/0a9e7bae/WBjrO27Iyp7yi6_K93Q5p_video.mp4",
+          "content_type": "video/mp4",
+          "file_name": "video.mp4",
+          "file_size": 4730872
+        },
+        "seed": 1981918390
+      },
+      "fileSizeBytes": 4730872
+    },
+    {
+      "order": 1,
+      "clipId": "axis-noomo-scene-02-enter-crystal",
+      "sourceImage": "/Users/takanakashuusuke/Desktop/AI_Automation/axis_site_cinematic/assets/generated/noomo-axis-20260616/axis-noomo-scene-02.png",
+      "video": "/Users/takanakashuusuke/Desktop/AI_Automation/axis_site_cinematic/assets/generated/noomo-axis-20260616/i2v/axis-noomo-scene-02-enter-crystal.mp4",
+      "prompt": "Macro pass-through camera move into the translucent crystalline surface. Foreground glass facets slide across the frame, network lines and data clouds inside the crystal expand in depth, light refracts and bends as if the camera is entering the structure. Elegant, controlled, not chaotic. No text overlay, no subtitles, no logo, no UI captions, no extra words, no readable letters, no distorted typography, no cartoon style, no anime style, no flat illustration, no melted geometry, no sudden object replacement. Preserve the original scene composition, premium dark AXIS mood, and crystalline axis motif.",
+      "model": "bytedance/seedance-2.0/image-to-video",
+      "duration": "5",
+      "resolution": "720p",
+      "aspectRatio": "16:9",
+      "status": "ok",
+      "startedAt": "2026-06-16T13:52:03",
+      "completedAt": "2026-06-16T13:54:38",
+      "elapsedSeconds": 155.1,
+      "falVideoUrl": "https://v3b.fal.media/files/b/0a9e7be7/ZmXrc3RhZazIL0quuIy6H_video.mp4",
+      "result": {
+        "video": {
+          "url": "https://v3b.fal.media/files/b/0a9e7be7/ZmXrc3RhZazIL0quuIy6H_video.mp4",
+          "content_type": "video/mp4",
+          "file_name": "video.mp4",
+          "file_size": 7793326
+        },
+        "seed": 31099419
+      },
+      "fileSizeBytes": 7793326
+    },
+    {
+      "order": 2,
+      "clipId": "axis-noomo-scene-03-lateral-data-current",
+      "sourceImage": "/Users/takanakashuusuke/Desktop/AI_Automation/axis_site_cinematic/assets/generated/noomo-axis-20260616/axis-noomo-scene-03.png",
+      "video": "/Users/takanakashuusuke/Desktop/AI_Automation/axis_site_cinematic/assets/generated/noomo-axis-20260616/i2v/axis-noomo-scene-03-lateral-data-current.mp4",
+      "prompt": "High-speed lateral camera travel from left to right through a dark data current. Light trails, abstract graphs, particles, and transparent panels streak past at different depths, while the crystalline axis remains coherent in the distance. Dynamic but premium, like scroll-driven digital storytelling. No text overlay, no subtitles, no logo, no UI captions, no extra words, no readable letters, no distorted typography, no cartoon style, no anime style, no flat illustration, no melted geometry, no sudden object replacement. Preserve the original scene composition, premium dark AXIS mood, and crystalline axis motif.",
+      "model": "bytedance/seedance-2.0/image-to-video",
+      "duration": "5",
+      "resolution": "720p",
+      "aspectRatio": "16:9",
+      "status": "ok",
+      "startedAt": "2026-06-16T13:54:38",
+      "completedAt": "2026-06-16T13:58:13",
+      "elapsedSeconds": 215.7,
+      "falVideoUrl": "https://v3b.fal.media/files/b/0a9e7bfd/Vuc2Eh4V78CMu-ienDDR2_video.mp4",
+      "result": {
+        "video": {
+          "url": "https://v3b.fal.media/files/b/0a9e7bfd/Vuc2Eh4V78CMu-ienDDR2_video.mp4",
+          "content_type": "video/mp4",
+          "file_name": "video.mp4",
+          "file_size": 5040705
+        },
+        "seed": 36288249
+      },
+      "fileSizeBytes": 5040705
+    },
+    {
+      "order": 3,
+      "clipId": "axis-noomo-scene-04-forward-ui-corridor",
+      "sourceImage": "/Users/takanakashuusuke/Desktop/AI_Automation/axis_site_cinematic/assets/generated/noomo-axis-20260616/axis-noomo-scene-04.png",
+      "video": "/Users/takanakashuusuke/Desktop/AI_Automation/axis_site_cinematic/assets/generated/noomo-axis-20260616/i2v/axis-noomo-scene-04-forward-ui-corridor.mp4",
+      "prompt": "Forward dolly through a transparent web architecture corridor toward the crystal axis at the vanishing point. Glass floors, abstract UI panels, wireframe frames, and luminous route lines pass by with strong parallax. No readable interface text, only abstract shapes. Smooth, immersive, spatial. No text overlay, no subtitles, no logo, no UI captions, no extra words, no readable letters, no distorted typography, no cartoon style, no anime style, no flat illustration, no melted geometry, no sudden object replacement. Preserve the original scene composition, premium dark AXIS mood, and crystalline axis motif.",
+      "model": "bytedance/seedance-2.0/image-to-video",
+      "duration": "5",
+      "resolution": "720p",
+      "aspectRatio": "16:9",
+      "status": "ok",
+      "startedAt": "2026-06-16T13:58:13",
+      "completedAt": "2026-06-16T14:00:49",
+      "elapsedSeconds": 155.9,
+      "falVideoUrl": "https://v3b.fal.media/files/b/0a9e7c13/EOFmK5-TEsNONptie775T_video.mp4",
+      "result": {
+        "video": {
+          "url": "https://v3b.fal.media/files/b/0a9e7c13/EOFmK5-TEsNONptie775T_video.mp4",
+          "content_type": "video/mp4",
+          "file_name": "video.mp4",
+          "file_size": 5982836
+        },
+        "seed": 1161404695
+      },
+      "fileSizeBytes": 5982836
+    },
+    {
+      "order": 4,
+      "clipId": "axis-noomo-scene-05-orbit-object",
+      "sourceImage": "/Users/takanakashuusuke/Desktop/AI_Automation/axis_site_cinematic/assets/generated/noomo-axis-20260616/axis-noomo-scene-05.png",
+      "video": "/Users/takanakashuusuke/Desktop/AI_Automation/axis_site_cinematic/assets/generated/noomo-axis-20260616/i2v/axis-noomo-scene-05-orbit-object.mp4",
+      "prompt": "Smooth camera orbit around the central crystalline orbital object. Film-strip arcs, glowing rings, shards, and particles rotate gently at layered depths, large foreground fragments briefly occlude the view. Preserve the object shape and high-end cinematic 3D mood. No text overlay, no subtitles, no logo, no UI captions, no extra words, no readable letters, no distorted typography, no cartoon style, no anime style, no flat illustration, no melted geometry, no sudden object replacement. Preserve the original scene composition, premium dark AXIS mood, and crystalline axis motif.",
+      "model": "bytedance/seedance-2.0/image-to-video",
+      "duration": "5",
+      "resolution": "720p",
+      "aspectRatio": "16:9",
+      "status": "ok",
+      "startedAt": "2026-06-16T14:00:49",
+      "completedAt": "2026-06-16T14:03:36",
+      "elapsedSeconds": 166.6,
+      "falVideoUrl": "https://v3b.fal.media/files/b/0a9e7c1d/jU_3O7uuRH2GVb73egFlM_video.mp4",
+      "result": {
+        "video": {
+          "url": "https://v3b.fal.media/files/b/0a9e7c1d/jU_3O7uuRH2GVb73egFlM_video.mp4",
+          "content_type": "video/mp4",
+          "file_name": "video.mp4",
+          "file_size": 4322397
+        },
+        "seed": 209816701
+      },
+      "fileSizeBytes": 4322397
+    },
+    {
+      "order": 5,
+      "clipId": "axis-noomo-scene-07-vertical-ascent",
+      "sourceImage": "/Users/takanakashuusuke/Desktop/AI_Automation/axis_site_cinematic/assets/generated/noomo-axis-20260616/axis-noomo-scene-07.png",
+      "video": "/Users/takanakashuusuke/Desktop/AI_Automation/axis_site_cinematic/assets/generated/noomo-axis-20260616/i2v/axis-noomo-scene-07-vertical-ascent.mp4",
+      "prompt": "Vertical camera ascent from bottom to top through the luminous shaft. Golden data particles rise upward, glass light gates pass the camera, growth curves glow inside the architecture, and the crystal axis stretches into a tower of light. Strong upward motion, stable premium composition. No text overlay, no subtitles, no logo, no UI captions, no extra words, no readable letters, no distorted typography, no cartoon style, no anime style, no flat illustration, no melted geometry, no sudden object replacement. Preserve the original scene composition, premium dark AXIS mood, and crystalline axis motif.",
+      "model": "bytedance/seedance-2.0/image-to-video",
+      "duration": "5",
+      "resolution": "720p",
+      "aspectRatio": "16:9",
+      "status": "ok",
+      "startedAt": "2026-06-16T14:03:36",
+      "completedAt": "2026-06-16T14:05:36",
+      "elapsedSeconds": 120.6,
+      "falVideoUrl": "https://v3b.fal.media/files/b/0a9e7c2f/oBy9DafX109WAwtGzDjSY_video.mp4",
+      "result": {
+        "video": {
+          "url": "https://v3b.fal.media/files/b/0a9e7c2f/oBy9DafX109WAwtGzDjSY_video.mp4",
+          "content_type": "video/mp4",
+          "file_name": "video.mp4",
+          "file_size": 7540249
+        },
+        "seed": 1686368936
+      },
+      "fileSizeBytes": 7540249
+    },
+    {
+      "order": 6,
+      "clipId": "axis-noomo-scene-09-exit-gate",
+      "sourceImage": "/Users/takanakashuusuke/Desktop/AI_Automation/axis_site_cinematic/assets/generated/noomo-axis-20260616/axis-noomo-scene-09.png",
+      "video": "/Users/takanakashuusuke/Desktop/AI_Automation/axis_site_cinematic/assets/generated/noomo-axis-20260616/i2v/axis-noomo-scene-09-exit-gate.mp4",
+      "prompt": "Forward camera move through the luminous exit gate toward a calm horizon. Portal edges and glass pillars pass close to the lens, the crystalline gateway breathes with soft light, the dark environment opens into a hopeful future glow. Smooth, premium, refined, not explosive. No text overlay, no subtitles, no logo, no UI captions, no extra words, no readable letters, no distorted typography, no cartoon style, no anime style, no flat illustration, no melted geometry, no sudden object replacement. Preserve the original scene composition, premium dark AXIS mood, and crystalline axis motif.",
+      "model": "bytedance/seedance-2.0/image-to-video",
+      "duration": "5",
+      "resolution": "720p",
+      "aspectRatio": "16:9",
+      "status": "ok",
+      "startedAt": "2026-06-16T14:05:36",
+      "completedAt": "2026-06-16T14:08:20",
+      "elapsedSeconds": 163.8,
+      "falVideoUrl": "https://v3b.fal.media/files/b/0a9e7c39/MhhmbeZ4Z4MLSsYRtNqD__video.mp4",
+      "result": {
+        "video": {
+          "url": "https://v3b.fal.media/files/b/0a9e7c39/MhhmbeZ4Z4MLSsYRtNqD__video.mp4",
+          "content_type": "video/mp4",
+          "file_name": "video.mp4",
+          "file_size": 4339023
+        },
+        "seed": 1595648978
+      },
+      "fileSizeBytes": 4339023
+    }
+  ],
+  "status": "running",
+  "updatedAt": "2026-06-16T14:08:20"
+}
