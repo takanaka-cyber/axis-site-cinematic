@@ -274,7 +274,7 @@ canvas {
     linear-gradient(180deg, transparent, rgba(255, 255, 255, .07), transparent);
   filter: blur(.2px);
   transform:
-    translate3d(calc(var(--depth-idle-x, 0px) + var(--camera-x, 0px) * .18), calc(var(--depth-idle-y, 0px) + var(--camera-y, 0px) * .1), 0)
+    translate3d(calc(var(--depth-idle-x, 0px) + var(--camera-x, 0px) * .04), calc(var(--depth-idle-y, 0px) + var(--camera-y, 0px) * .025), 0)
     rotateY(var(--depth-rotate, -18deg))
     skewX(-9deg);
   transform-origin: center;
@@ -308,8 +308,8 @@ canvas {
     linear-gradient(90deg, rgba(255, 255, 255, .08) 1px, transparent 1px);
   background-size: 96px 96px;
   transform:
-    translate3d(calc(var(--camera-x, 0px) * -.08), calc(var(--camera-y, 0px) * -.08), 0)
-    scale(calc(1.04 + (var(--camera-z, 1) - 1) * .16))
+    translate3d(calc(var(--camera-x, 0px) * -.02), calc(var(--camera-y, 0px) * -.02), 0)
+    scale(calc(1.04 + (var(--camera-z, 1) - 1) * .05))
     rotate(var(--camera-roll, 0deg));
   animation: grid-drift 28s linear infinite;
   pointer-events: none;

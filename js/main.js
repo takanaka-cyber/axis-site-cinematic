@@ -526,38 +526,38 @@
   const cameraMove = (mode, local, impact, velocity) => {
     const p = smooth(clamp(local));
     const v = clamp(velocity, -1, 1);
-    const base = { x: 0, y: 0, scale: 1.06, rotate: 0, dim: .28, scan: .12, roll: 0 };
+    const base = { x: 0, y: 0, scale: 1.018, rotate: 0, dim: .28, scan: .1, roll: 0 };
 
     if (mode === 'axis') {
-      return { x: lerp(64, -42, p) - v * 20, y: lerp(48, -34, p), scale: lerp(1.28, 1.01, p) + impact * .025, rotate: lerp(-1.1, .55, p), dim: lerp(.38, .22, p), scan: .12 + impact * .2, roll: lerp(-.16, .1, p) };
+      return { x: lerp(12, -8, p) - v * 4, y: lerp(8, -6, p), scale: lerp(1.055, 1.01, p) + impact * .006, rotate: lerp(-.12, .08, p), dim: lerp(.34, .22, p), scan: .1 + impact * .08, roll: lerp(-.025, .018, p) };
     }
     if (mode === 'ink') {
-      return { x: lerp(96, -76, p), y: lerp(-38, 52, p), scale: lerp(1.32, 1.03, p), rotate: lerp(-1.8, 1.0, p), dim: lerp(.34, .24, p), scan: .08 + impact * .16, roll: lerp(.12, -.16, p) };
+      return { x: lerp(10, -12, p), y: lerp(-6, 8, p), scale: lerp(1.045, 1.012, p), rotate: lerp(-.1, .08, p), dim: lerp(.32, .24, p), scan: .08 + impact * .07, roll: lerp(.018, -.022, p) };
     }
     if (mode === 'signal') {
-      return { x: lerp(170, -190, p) - v * 34, y: lerp(24, -26, p), scale: lerp(1.24, 1.06, p), rotate: lerp(.65, -.65, p), dim: .24, scan: .2 + impact * .24, roll: lerp(.08, -.08, p) };
+      return { x: lerp(20, -24, p) - v * 5, y: lerp(3, -3, p), scale: lerp(1.04, 1.018, p), rotate: lerp(.06, -.06, p), dim: .24, scan: .16 + impact * .08, roll: lerp(.012, -.012, p) };
     }
     if (mode === 'interface') {
-      return { x: lerp(28, -24, p), y: lerp(96, -58, p), scale: lerp(1.38, 1.01, p), rotate: lerp(.3, -.22, p), dim: .24, scan: .18 + impact * .2, roll: lerp(.04, -.04, p) };
+      return { x: lerp(4, -4, p), y: lerp(16, -10, p), scale: lerp(1.048, 1.01, p), rotate: lerp(.03, -.025, p), dim: .24, scan: .15 + impact * .07, roll: lerp(.008, -.008, p) };
     }
     if (mode === 'portal') {
       const orbit = Math.sin(p * Math.PI * 1.3);
-      return { x: lerp(112, -72, p) + orbit * 48, y: lerp(26, -34, p) - Math.cos(p * Math.PI) * 32, scale: lerp(1.32, 1.03, p), rotate: lerp(-1.7, 1.7, p), dim: .24, scan: .12 + impact * .24, roll: lerp(-.18, .18, p) };
+      return { x: lerp(12, -8, p) + orbit * 5, y: lerp(4, -6, p) - Math.cos(p * Math.PI) * 4, scale: lerp(1.04, 1.014, p), rotate: lerp(-.14, .16, p), dim: .24, scan: .11 + impact * .08, roll: lerp(-.025, .025, p) };
     }
     if (mode === 'team') {
-      return { x: lerp(-74, 68, p), y: lerp(-96, 42, p), scale: lerp(1.24, 1.04, p), rotate: lerp(1.0, -1.0, p), dim: .3, scan: .1 + impact * .18, roll: lerp(.14, -.14, p) };
+      return { x: lerp(-10, 8, p), y: lerp(-12, 8, p), scale: lerp(1.036, 1.014, p), rotate: lerp(.08, -.08, p), dim: .3, scan: .09 + impact * .06, roll: lerp(.018, -.018, p) };
     }
     if (mode === 'growth') {
-      return { x: lerp(22, -18, p), y: lerp(150, -174, p), scale: lerp(1.26, 1.01, p), rotate: lerp(.35, -.28, p), dim: .26, scan: .12 + impact * .22, roll: lerp(.06, -.08, p) };
+      return { x: lerp(3, -3, p), y: lerp(18, -22, p), scale: lerp(1.04, 1.01, p), rotate: lerp(.035, -.03, p), dim: .26, scan: .11 + impact * .07, roll: lerp(.01, -.012, p) };
     }
     if (mode === 'recruit') {
-      return { x: lerp(-126, 106, p), y: lerp(54, -42, p), scale: lerp(1.24, 1.04, p), rotate: lerp(-1.35, 1.35, p), dim: .28, scan: .12 + impact * .18, roll: lerp(-.14, .16, p) };
+      return { x: lerp(-16, 14, p), y: lerp(8, -6, p), scale: lerp(1.035, 1.014, p), rotate: lerp(-.12, .12, p), dim: .28, scan: .1 + impact * .06, roll: lerp(-.018, .02, p) };
     }
     if (mode === 'contact') {
-      return { x: lerp(58, -44, p), y: lerp(82, -52, p), scale: lerp(1.34, 1.0, p), rotate: lerp(-.45, .35, p), dim: lerp(.32, .22, p), scan: .16 + impact * .2, roll: lerp(-.06, .08, p) };
+      return { x: lerp(8, -8, p), y: lerp(10, -8, p), scale: lerp(1.045, 1.0, p), rotate: lerp(-.045, .035, p), dim: lerp(.3, .22, p), scan: .13 + impact * .07, roll: lerp(-.01, .012, p) };
     }
     if (mode === 'foundation') {
-      return { x: lerp(22, -12, p), y: lerp(26, -12, p), scale: lerp(1.14, 1.0, p), rotate: 0, dim: .3, scan: .08 + impact * .08, roll: 0 };
+      return { x: lerp(4, -4, p), y: lerp(4, -3, p), scale: lerp(1.02, 1.0, p), rotate: 0, dim: .3, scan: .08 + impact * .05, roll: 0 };
     }
 
     return base;
@@ -566,16 +566,16 @@
   const copyMove = (mode, local) => {
     const p = smooth(clamp(local));
     const easeOut = 1 - Math.pow(1 - clamp(local), 3);
-    if (mode === 'axis') return { x: lerp(-18, 28, p), y: lerp(18, -22, p), scale: lerp(1.012, .988, p), rotate: lerp(-.15, .08, p) };
-    if (mode === 'ink') return { x: lerp(56, -18, p), y: lerp(-10, 16, p), scale: lerp(.985, 1.012, p), rotate: lerp(.18, -.12, p) };
-    if (mode === 'signal') return { x: lerp(-72, 52, p), y: lerp(-12, 8, p), scale: 1, rotate: lerp(-.2, .16, p) };
-    if (mode === 'interface') return { x: 0, y: lerp(34, -38, p), scale: lerp(.97, 1.015, p), rotate: 0 };
-    if (mode === 'portal') return { x: Math.sin(easeOut * Math.PI) * 36, y: lerp(20, -18, p), scale: lerp(1.012, .99, p), rotate: lerp(.3, -.22, p) };
-    if (mode === 'team') return { x: lerp(-28, 28, p), y: lerp(-26, 24, p), scale: 1, rotate: lerp(-.16, .16, p) };
-    if (mode === 'growth') return { x: 0, y: lerp(52, -58, p), scale: lerp(.985, 1.006, p), rotate: 0 };
-    if (mode === 'recruit') return { x: lerp(42, -44, p), y: lerp(30, -20, p), scale: lerp(.99, 1.01, p), rotate: lerp(.18, -.18, p) };
-    if (mode === 'contact') return { x: lerp(-38, 34, p), y: lerp(34, -28, p), scale: lerp(.98, 1.012, p), rotate: lerp(-.18, .14, p) };
-    if (mode === 'foundation') return { x: lerp(0, 10, p), y: lerp(10, -10, p), scale: 1, rotate: 0 };
+    if (mode === 'axis') return { x: lerp(-8, 10, p), y: lerp(8, -8, p), scale: lerp(1.004, .998, p), rotate: lerp(-.035, .02, p) };
+    if (mode === 'ink') return { x: lerp(14, -8, p), y: lerp(-5, 8, p), scale: lerp(.998, 1.004, p), rotate: lerp(.035, -.025, p) };
+    if (mode === 'signal') return { x: lerp(-16, 14, p), y: lerp(-6, 4, p), scale: 1, rotate: lerp(-.035, .03, p) };
+    if (mode === 'interface') return { x: 0, y: lerp(12, -12, p), scale: lerp(.998, 1.004, p), rotate: 0 };
+    if (mode === 'portal') return { x: Math.sin(easeOut * Math.PI) * 10, y: lerp(8, -8, p), scale: lerp(1.004, .998, p), rotate: lerp(.04, -.035, p) };
+    if (mode === 'team') return { x: lerp(-10, 10, p), y: lerp(-8, 8, p), scale: 1, rotate: lerp(-.03, .03, p) };
+    if (mode === 'growth') return { x: 0, y: lerp(14, -16, p), scale: lerp(.998, 1.003, p), rotate: 0 };
+    if (mode === 'recruit') return { x: lerp(12, -12, p), y: lerp(10, -8, p), scale: lerp(.998, 1.003, p), rotate: lerp(.035, -.035, p) };
+    if (mode === 'contact') return { x: lerp(-10, 10, p), y: lerp(12, -10, p), scale: lerp(.998, 1.004, p), rotate: lerp(-.03, .025, p) };
+    if (mode === 'foundation') return { x: lerp(0, 6, p), y: lerp(6, -6, p), scale: 1, rotate: 0 };
     return { x: 0, y: 0, scale: 1, rotate: 0 };
   };
 
@@ -603,36 +603,36 @@
       }
 
       const orbit = Math.sin(after * Math.PI);
-      let x = lerp(64, -44, after);
-      let y = lerp(22, -28, after);
-      let scale = lerp(1.28, .98, after) + pulse * .05;
-      let rotate = lerp(-1.2, .8, after);
-      let opacity = pulse * .78;
+      let x = lerp(18, -16, after);
+      let y = lerp(8, -10, after);
+      let scale = lerp(1.08, .995, after) + pulse * .018;
+      let rotate = lerp(-.28, .22, after);
+      let opacity = pulse * .66;
 
       if (entry.boundary === 1) {
-        x = lerp(36, -16, after);
-        y = lerp(14, -18, after);
-        scale = lerp(1.46, .96, after) + pulse * .08;
-        rotate = lerp(-.8, .28, after);
-        opacity = pulse * .9;
-      } else if (entry.boundary === 4) {
-        x = lerp(108, -88, after) + orbit * 32;
-        y = lerp(46, -48, after) - orbit * 22;
-        scale = lerp(1.34, .98, after) + pulse * .06;
-        rotate = lerp(-4.2, 4.6, after);
-        opacity = pulse * .82;
-      } else if (entry.boundary === 6) {
-        x = lerp(-20, 24, after);
-        y = lerp(132, -146, after);
-        scale = lerp(1.3, .95, after) + pulse * .04;
-        rotate = lerp(.4, -.35, after);
+        x = lerp(10, -8, after);
+        y = lerp(6, -8, after);
+        scale = lerp(1.11, .995, after) + pulse * .018;
+        rotate = lerp(-.16, .08, after);
         opacity = pulse * .78;
+      } else if (entry.boundary === 4) {
+        x = lerp(24, -22, after) + orbit * 8;
+        y = lerp(12, -14, after) - orbit * 6;
+        scale = lerp(1.09, .995, after) + pulse * .018;
+        rotate = lerp(-.55, .62, after);
+        opacity = pulse * .7;
+      } else if (entry.boundary === 6) {
+        x = lerp(-8, 8, after);
+        y = lerp(34, -38, after);
+        scale = lerp(1.08, .995, after) + pulse * .014;
+        rotate = lerp(.12, -.1, after);
+        opacity = pulse * .66;
       } else if (entry.boundary === 8) {
-        x = lerp(-82, 58, after);
-        y = lerp(54, -38, after);
-        scale = lerp(1.4, .94, after) + pulse * .08;
-        rotate = lerp(2.8, -1.4, after);
-        opacity = pulse * .88;
+        x = lerp(-22, 18, after);
+        y = lerp(16, -14, after);
+        scale = lerp(1.1, .995, after) + pulse * .018;
+        rotate = lerp(.55, -.34, after);
+        opacity = pulse * .74;
       }
 
       setStyle(bridge, '--bridge-opacity', opacity.toFixed(3));
@@ -746,14 +746,14 @@
       const mode = motionModes[index] || 'axis';
       const camera = cameraMove(mode, isActive ? activeLocal : (index < activeScene ? 1 : 0), impact, fxState.velocity);
       const adjacentProgress = direction > 0 ? 0 : 1;
-      const visible = isActive ? 1 : impact * .38;
-      const drift = direction * (180 + distance * 44);
-      const velocityPush = fxState.velocity * (isActive ? -18 : 58);
-      const burstPush = fxState.burst * direction * 28;
-      const depth = isActive ? camera.scale : 1.18 + distance * .035 + impact * .03;
-      const y = isActive ? camera.y : drift * .22 + burstPush * .2;
-      const x = isActive ? camera.x + velocityPush * .18 : drift * -.54 + velocityPush * .22 + burstPush * .36;
-      const rotate = isActive ? camera.rotate + impact * .2 : direction * 1.2;
+      const visible = isActive ? 1 : impact * .32;
+      const drift = direction * (92 + distance * 18);
+      const velocityPush = fxState.velocity * (isActive ? -5 : 20);
+      const burstPush = fxState.burst * direction * 12;
+      const depth = isActive ? camera.scale : 1.075 + distance * .015 + impact * .012;
+      const y = isActive ? camera.y : drift * .12 + burstPush * .12;
+      const x = isActive ? camera.x + velocityPush * .12 : drift * -.34 + velocityPush * .16 + burstPush * .18;
+      const rotate = isActive ? camera.rotate + impact * .035 : direction * .28;
       const dim = isActive ? camera.dim : .6;
       const scan = isActive ? camera.scan : .06;
 
