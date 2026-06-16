@@ -70,6 +70,8 @@
     video: scene.querySelector('video'),
     duration: 5,
     lastTime: -1,
+    lastSeekAt: 0,
+    playUntil: null,
     active: false,
     near: false,
   }));
@@ -152,8 +154,12 @@
   };
 
   const setRoot = (prop, value) => setStyle(root, prop, value);
+  const snap = (value, step = .25) => Math.round(value / step) * step;
+  const px = (value, step = .25) => `${snap(value, step).toFixed(2)}px`;
+  const deg = (value, step = .01) => `${snap(value, step).toFixed(3)}deg`;
+  const scalar = (value, step = .001) => snap(value, step).toFixed(3);
 
-  const particleCount = lowPower ? 24 : (window.innerWidth < 860 ? 32 : 52);
+  const particleCount = lowPower ? 18 : (window.innerWidth < 860 ? 28 : 40);
   const particles = Array.from({ length: particleCount }, (_, i) => ({
     x: (Math.sin(i * 17.11) + 1) / 2,
     y: (Math.cos(i * 9.73) + 1) / 2,
@@ -434,7 +440,7 @@
 
   const resizeCanvas = () => {
     if (!canvas || !ctx) return;
-    dpr = Math.min(lowPower ? .82 : 1, window.devicePixelRatio || 1);
+    dpr = Math.min(lowPower ? .68 : .82, window.devicePixelRatio || 1);
     canvasW = window.innerWidth;
     canvasH = window.innerHeight;
     canvas.width = Math.floor(canvasW * dpr);
@@ -476,7 +482,7 @@
     if (root.dataset.motion !== fxState.motion) root.dataset.motion = fxState.motion;
   };
 
-  const scrubVideo = (entry, progress) => {
+  const scrubVideo = (entry, progress, options = {}) => {
     const { video } = entry;
     if (!video) return;
     if (reduced) {
@@ -486,8 +492,8 @@
     entry.pendingProgress = clamp(progress);
     if (!entry.sourceReady) return;
 
-    if (!video.paused) video.pause();
     if (video.readyState < 1) {
+      if (!video.paused) video.pause();
       if (video.dataset.playState !== 'loading') {
         video.dataset.playState = 'loading';
         video.load();
@@ -499,11 +505,57 @@
     const fpsStep = 1 / 24;
     const target = clamp(progress) * Math.max(.1, duration - .05);
     const quantized = Math.round(target / fpsStep) * fpsStep;
+    const now = options.now || performance.now();
+    const active = Boolean(options.active);
+    const force = Boolean(options.force);
+    const velocity = Number.isFinite(options.velocity) ? options.velocity : fxState.velocity;
+    const visualDelta = Math.abs(targetScrollY - visualScrollY);
+    const activelyScrolling = active && !force && (visualDelta > 1.4 || Math.abs(velocity) > .018 || fxState.speed > .024);
+    const current = Number.isFinite(video.currentTime) ? video.currentTime : 0;
+    const drift = quantized - current;
+    const absDrift = Math.abs(drift);
 
-    if (Math.abs(video.currentTime - quantized) > fpsStep * .65) {
+    if (entry.playUntil !== null && video.currentTime >= entry.playUntil - fpsStep * .35) {
+      if (!video.paused) video.pause();
+      video.playbackRate = 1;
+      entry.playUntil = null;
+    }
+
+    if (!force && activelyScrolling && drift > fpsStep * .75 && drift < .42 && video.readyState >= 2) {
+      const rate = clamp(.66 + drift * 4.2 + Math.abs(velocity) * .28, .66, 1.65);
+      entry.playUntil = quantized;
+      if (Math.abs(video.playbackRate - rate) > .05) video.playbackRate = rate;
+      if (video.paused) {
+        const playPromise = video.play();
+        if (playPromise && typeof playPromise.catch === 'function') {
+          playPromise.catch(() => {
+            video.dataset.playState = 'play-blocked';
+          });
+        }
+      }
+      video.dataset.targetTime = quantized.toFixed(3);
+      video.dataset.playState = 'play-scrub';
+      return;
+    }
+
+    if (!video.paused) video.pause();
+    video.playbackRate = 1;
+    entry.playUntil = null;
+
+    const minSeekGap = force ? 0 : (activelyScrolling ? 54 : 34);
+    const tolerance = force ? fpsStep * .35 : (activelyScrolling ? fpsStep * 1.15 : fpsStep * .65);
+    if (absDrift <= tolerance) return;
+    if (!force && now - (entry.lastSeekAt || 0) < minSeekGap && absDrift < .28) return;
+
+    if (absDrift > tolerance) {
       try {
         entry.targetTime = quantized;
-        video.currentTime = quantized;
+        if (typeof video.fastSeek === 'function' && absDrift > .12) {
+          video.fastSeek(quantized);
+        } else {
+          video.currentTime = quantized;
+        }
+        entry.lastSeekAt = now;
         video.dataset.targetTime = quantized.toFixed(3);
         entry.lastTime = quantized;
         video.dataset.playState = 'scrub';
@@ -517,8 +569,10 @@
     const { video } = entry;
     if (!video) return;
     if (!video.paused) video.pause();
+    video.playbackRate = 1;
+    entry.playUntil = null;
     if (force || video.dataset.playState !== 'paused') {
-      scrubVideo(entry, progress);
+      scrubVideo(entry, progress, { force: true });
       video.dataset.playState = 'paused';
     }
   };
@@ -635,11 +689,11 @@
         opacity = pulse * .74;
       }
 
-      setStyle(bridge, '--bridge-opacity', opacity.toFixed(3));
-      setStyle(bridge, '--bridge-x', `${x.toFixed(2)}px`);
-      setStyle(bridge, '--bridge-y', `${y.toFixed(2)}px`);
-      setStyle(bridge, '--bridge-scale', scale.toFixed(4));
-      setStyle(bridge, '--bridge-rotate', `${rotate.toFixed(3)}deg`);
+      setStyle(bridge, '--bridge-opacity', scalar(opacity, .002));
+      setStyle(bridge, '--bridge-x', px(x));
+      setStyle(bridge, '--bridge-y', px(y));
+      setStyle(bridge, '--bridge-scale', scalar(scale));
+      setStyle(bridge, '--bridge-rotate', deg(rotate));
     });
   };
 
@@ -701,11 +755,11 @@
     }
     applySceneVars();
     const activeCamera = cameraMove(fxState.motion, activeLocal, impact, fxState.velocity);
-    setRoot('--camera-x', `${activeCamera.x.toFixed(2)}px`);
-    setRoot('--camera-y', `${activeCamera.y.toFixed(2)}px`);
-    setRoot('--camera-z', activeCamera.scale.toFixed(4));
-    setRoot('--camera-roll', `${(activeCamera.roll || 0).toFixed(3)}deg`);
-    setRoot('--camera-progress', activeLocal.toFixed(4));
+    setRoot('--camera-x', px(activeCamera.x));
+    setRoot('--camera-y', px(activeCamera.y));
+    setRoot('--camera-z', scalar(activeCamera.scale));
+    setRoot('--camera-roll', deg(activeCamera.roll || 0, .005));
+    setRoot('--camera-progress', scalar(activeLocal, .001));
 
     if (sceneChanged) {
       fxState.burst = 1;
@@ -757,13 +811,13 @@
       const dim = isActive ? camera.dim : .6;
       const scan = isActive ? camera.scan : .06;
 
-      setStyle(scene, 'opacity', visible.toFixed(3));
-      setStyle(scene, '--scene-x', `${x.toFixed(2)}px`);
-      setStyle(scene, '--scene-y', `${y.toFixed(2)}px`);
-      setStyle(scene, '--scene-scale', depth.toFixed(4));
-      setStyle(scene, '--scene-rotate', `${rotate.toFixed(3)}deg`);
-      setStyle(scene, '--scene-dim', dim.toFixed(3));
-      setStyle(scene, '--scene-scan', scan.toFixed(3));
+      setStyle(scene, 'opacity', scalar(visible, .002));
+      setStyle(scene, '--scene-x', px(x));
+      setStyle(scene, '--scene-y', px(y));
+      setStyle(scene, '--scene-scale', scalar(depth));
+      setStyle(scene, '--scene-rotate', deg(rotate));
+      setStyle(scene, '--scene-dim', scalar(dim, .002));
+      setStyle(scene, '--scene-scan', scalar(scan, .002));
       if (entry.active !== isActive) {
         scene.classList.toggle('is-active', isActive);
         entry.active = isActive;
@@ -773,7 +827,7 @@
         entry.near = isNear;
       }
       if (isActive) {
-        scrubVideo(entry, activeLocal);
+        scrubVideo(entry, activeLocal, { now, velocity: fxState.velocity, active: true });
       } else {
         settleVideo(entry, adjacentProgress, true);
       }
@@ -797,10 +851,10 @@
       if (copy) {
         const mode = motionModes[sceneIndex] || 'axis';
         const move = copyMove(mode, isCurrentChapter ? sectionLocal : (index < activeChapter ? 1 : 0));
-        setStyle(copy, '--copy-track-x', `${move.x.toFixed(2)}px`);
-        setStyle(copy, '--copy-track-y', `${move.y.toFixed(2)}px`);
-        setStyle(copy, '--copy-track-scale', move.scale.toFixed(4));
-        setStyle(copy, '--copy-track-rotate', `${move.rotate.toFixed(3)}deg`);
+        setStyle(copy, '--copy-track-x', px(move.x));
+        setStyle(copy, '--copy-track-y', px(move.y));
+        setStyle(copy, '--copy-track-scale', scalar(move.scale));
+        setStyle(copy, '--copy-track-rotate', deg(move.rotate));
       }
 
       if (entry.active !== isCurrentChapter) {
@@ -843,7 +897,7 @@
     const mode = fxState.motion;
     const t = time * .001;
     const idle = impact < .025 && speed < .016 && burst < .016 && Math.abs(velocity) < .016;
-    const frameGap = idle ? 120 : 42;
+    const frameGap = idle ? 140 : 56;
 
     if (time - lastFxDraw < frameGap) {
       requestAnimationFrame(renderFx);
@@ -892,7 +946,7 @@
       ctx.translate(canvasW * .58, canvasH * .42);
       ctx.strokeStyle = `rgba(0, 229, 194, ${.14 + cut * .32})`;
       ctx.lineWidth = 1 + cut * 2;
-      for (let i = 0; i < 7; i += 1) {
+      for (let i = 0; i < 5; i += 1) {
         const w = canvasW * (.1 + i * .018 + cut * .04);
         const h = canvasH * (.04 + (i % 3) * .018);
         ctx.strokeRect(-w * .5 + Math.sin(t + i) * 18, -h * .5 + (i - 3) * 34, w, h);
@@ -1000,7 +1054,7 @@
       ctx.globalAlpha = Math.min(.82, speed * 1.1 + impact * .2 + burst * .34);
       ctx.translate(canvasW * .5, canvasH * .5);
       ctx.rotate(-0.28 + velocity * .08 + burst * .08);
-      for (let i = 0; i < 12; i += 1) {
+      for (let i = 0; i < 8; i += 1) {
         const y = (i - 4) * canvasH * .095 + Math.sin(t * 1.4 + i) * 14;
         const length = canvasW * (.18 + speed * .36 + burst * .16 + (i % 3) * .035);
         const start = -canvasW * .42 + ((t * (90 + burst * 220) + i * 87) % (canvasW * .84));
@@ -1132,7 +1186,7 @@
       ctx.globalAlpha = Math.min(.72, cut * .58 + burst * .2);
       ctx.translate(canvasW * .5, canvasH * .5);
       ctx.rotate(velocity * .05);
-      for (let i = 0; i < 7; i += 1) {
+      for (let i = 0; i < 5; i += 1) {
         const angle = -0.95 + i * .31 + Math.sin(t * 1.7 + i) * .05;
         const near = canvasW * (.08 + (i % 3) * .035);
         const far = canvasW * (.42 + cut * .22 + (i % 2) * .04);

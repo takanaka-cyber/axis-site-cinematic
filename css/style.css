@@ -122,7 +122,6 @@ canvas {
     rotate(var(--scene-rotate, 0deg));
   transform-origin: center;
   will-change: opacity, transform;
-  clip-path: inset(var(--scene-top, 0%) var(--scene-right, 0%) var(--scene-bottom, 0%) var(--scene-left, 0%));
   backface-visibility: hidden;
   contain: paint;
 }
